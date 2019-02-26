@@ -12,12 +12,14 @@ date: "`r format(Sys.time(), '%d.%m.%Y')`"
 subtitle: 'Group members: Henrik Syversveen Lie, Mikal Solberg Stapnes'
 ---
 
+
 ```{r setup, include = FALSE}
 library(formatR)
 showsol <- FALSE
 library(knitr)
 opts_chunk$set(tidy.opts = list(width.cutoff = 68), tidy = TRUE, warning = FALSE, error = FALSE, message = FALSE, echo = TRUE)
 ```
+
 
 ```{r}
 library(spam)         # load the data
@@ -159,7 +161,4 @@ We observe that $q(\mathbf{\eta} \lvert \cdot)$ is a normal density written in c
 #Exercise 2
 
 We implement a Gibbs sampling algorithm with individual parameters updates using the full conditional for $\kappa_u$, $\kappa_v$ and $\mathbf{u}$. We update $\mathbf{\eta}$ using Metropolis-Hastings with $q(\mathbf{\eta} \lvert \mathbf{z}, \cdot)$ as the proposal density. We set $\mathbf{z} = \mathbf{\eta}^{(m-1)}$
-
-
-
 
