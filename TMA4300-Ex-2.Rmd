@@ -62,8 +62,7 @@ $$ \boldsymbol{\eta} \lvert \mathbf{u}, \kappa_v \sim \mathcal{N}(\mathbf{u}, \k
 The precision terms $\kappa_u$ and $\kappa_v$ are assigned Gamma priors
 
 $$ \kappa_u \sim \text{Gamma}(\alpha_u, \beta_u), \\
-\kappa_v \sim \text{Gamma}(\alpha_v, \beta_v).
-$$
+\kappa_v \sim \text{Gamma}(\alpha_v, \beta_v).$$
 
 With $\alpha_u = \alpha_v = 1$ and $\beta_u = \beta_v = 0.01$. 
 
