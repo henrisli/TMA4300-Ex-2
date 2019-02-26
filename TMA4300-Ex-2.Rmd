@@ -21,13 +21,8 @@ opts_chunk$set(tidy.opts = list(width.cutoff = 68), tidy = TRUE, warning = FALSE
 ```
 
 
-```{r}
+```{r, echo = F, eval = T}
 library(spam)         # load the data
-str(Oral)             # see structure of data
-#’data.frame’: 544 obs. of  3 variables:
-# $ Y  : int  18 62 44 12 18 27 20 29 39 21 . . .
-# $ E  : num  16.4 45.9 44.7 16.3 26.9 . . .
-# $ SMR: num  1.101 1.351 0.985 0.735 0.668 . . .
 attach(Oral)          # allow direct referencing to Y and E# load some libraries to generate nice map plots
 library(fields, warn.conflict=FALSE)
 library(colorspace)
@@ -78,27 +73,31 @@ We wish to analyse the data and its underlying spatial structure by implementing
 
 ## a)
 
-We start by computing the joint from our priors and the likelihood.
+We start by computing the joint distribution from likelihood and prior distributions.
 
 $$ p(\mathbf{y}, \mathbf{u}, \boldsymbol{\eta}, \kappa_u, \kappa_v) \\
  = p(\mathbf{y} \lvert \mathbf{u}, \boldsymbol{\eta}, \kappa_u, \kappa_v) \cdot p(\mathbf{u}, \boldsymbol{\eta}, \kappa_u, \kappa_v) \\
- = p(\mathbf{y} \lvert \cdot ) p(\kappa_u) p(\kappa_v) p(\mathbf{u} \lvert \kappa_u ) p(\boldsymbol{\eta} \lvert \mathbf{u}, \kappa_v) \\
+ = p(\mathbf{y} \lvert \boldsymbol{\eta} ) p(\boldsymbol{\eta} \lvert \mathbf{u}, \kappa_v) p(\kappa_v)p(\mathbf{u} \lvert \kappa_u )p(\kappa_u)    \\
  $$
 Inserting the Gamma density for $\kappa_u$ and $\kappa_v$, the normal density for $\mathbf{u}\lvert \kappa_u$ and the normal density for $\boldsymbol{\eta} \lvert \mathbf{u}, \kappa_v$ we get 
 
 
-$$p(\mathbf{y}, \mathbf{u}, \boldsymbol{\eta}, \kappa_u, \kappa_v) \\
-\propto p(\mathbf{y} \lvert \cdot ) \kappa_u^{\alpha_u - 1} \exp(-\beta_u \kappa_u)\kappa_v^{\alpha_v - 1} \exp(-\beta_v \kappa_v)
-\kappa_u^{(n-1)/2} \exp \big(-\frac{\kappa_u}{2}\mathbf{u}^T R \mathbf{u}\big) 
-\kappa_v^{n/2}\exp \Big (-\frac{\kappa_v}{2}(\boldsymbol{\eta} - \mathbf{u})^T(\boldsymbol{\eta} - \mathbf{u})\Big)
-$$
+\begin{align*}
+&p(\mathbf{y}, \mathbf{u}, \boldsymbol{\eta}, \kappa_u, \kappa_v) \propto\\
+&p(\mathbf{y} \lvert \boldsymbol{\eta} ) \kappa_v^{n/2}\exp \Big (-\frac{\kappa_v}{2}(\boldsymbol{\eta} - \mathbf{u})^T(\boldsymbol{\eta} - \mathbf{u})\Big)
+\kappa_v^{\alpha_v - 1} \exp(-\beta_v \kappa_v)
+\kappa_u^{(n-1)/2} \exp \big(-\frac{\kappa_u}{2}\mathbf{u}^T R \mathbf{u}\big)
+\kappa_u^{\alpha_u - 1} \exp(-\beta_u \kappa_u).
+\end{align*}
 
 Inserting the Poisson density of the data $\mathbf{y}$, we get 
 
-$$p(\mathbf{y}, \mathbf{u}, \boldsymbol{\eta}, \kappa_u, \kappa_v) \\
-\propto \Big(\prod_{i=1}^n \exp(\eta_i)^{y_i} \exp(-E_i \exp(\eta_i))\Big)  \kappa_u^{\alpha_u - 1} \exp(-\beta_u \kappa_u)\kappa_v^{\alpha_v - 1} \exp(-\beta_v \kappa_v)
-\kappa_u^{(n-1)/2} \exp \big(-\frac{\kappa_u}{2}\mathbf{u}^T R \mathbf{u}\big) 
-\kappa_v^{n/2}\exp \Big (-\frac{\kappa_v}{2}(\boldsymbol{\eta} - \mathbf{u})^T(\boldsymbol{\eta} - \mathbf{u})\Big), $$
+\begin{align*}
+p(\mathbf{y}, \mathbf{u}, \boldsymbol{\eta}, \kappa_u, \kappa_v) \propto &\Big(\prod_{i=1}^n \exp(\eta_i)^{y_i} \exp(-E_i \exp(\eta_i))\Big) \kappa_v^{n/2}\exp \Big (-\frac{\kappa_v}{2}(\boldsymbol{\eta} - \mathbf{u})^T(\boldsymbol{\eta} - \mathbf{u})\Big) \cdot\\
+&\kappa_v^{\alpha_v - 1} \exp(-\beta_v \kappa_v)
+\kappa_u^{(n-1)/2} \exp \big(-\frac{\kappa_u}{2}\mathbf{u}^T R \mathbf{u}\big)
+\kappa_u^{\alpha_u - 1} \exp(-\beta_u \kappa_u),
+\end{align*}
 
 which we can rewrite to 
 
@@ -106,25 +105,25 @@ $$ p(\mathbf{y}, \mathbf{u}, \boldsymbol{\eta}, \kappa_u, \kappa_v) \\
 \propto \kappa_u^{(n-1)/2 + \alpha_u - 1}\kappa_v^{n/2 + \alpha_v - 1}\exp \Big(-\beta_u \kappa_u -\beta_v \kappa_v -\frac{\kappa_u}{2}\mathbf{u}^T R \mathbf{u}
 -\frac{\kappa_v}{2}(\boldsymbol{\eta} - \mathbf{u})^T(\boldsymbol{\eta} - \mathbf{u}) + \sum_i (y_i \eta_i - E_i \exp(\eta_i) )\Big  ).$$
 
-The posterior of the parameters $p(\boldsymbol{\eta}, \mathbf{u},  \kappa_u, \kappa_v \lvert \mathbf{y})$ is proportional to the joint, giving us that 
+The posterior distribution of the parameters $p(\boldsymbol{\eta}, \mathbf{u},  \kappa_u, \kappa_v \lvert \mathbf{y})$ is proportional to the joint distribution, giving us that 
 
-$$ p(\boldsymbol{\eta}, \mathbf{u},  \kappa_u, \kappa_v \lvert \mathbf{y}) \propto p(\mathbf{y}, \mathbf{u}, \boldsymbol{\eta}, \kappa_u, \kappa_v) \\
-\propto \kappa_u^{(n-1)/2 + \alpha_u - 1}\kappa_v^{n/2 + \alpha_v - 1}\exp \Big(-\beta_u \kappa_u -\beta_v \kappa_v -\frac{\kappa_u}{2}\mathbf{u}^T R \mathbf{u}
--\frac{\kappa_v}{2}(\boldsymbol{\eta} - \mathbf{u})^T(\boldsymbol{\eta} - \mathbf{u}) + \sum_i (y_i \eta_i - E_i \exp(\eta_i) )\Big  ).$$
+\begin{align*} 
+&p(\boldsymbol{\eta}, \mathbf{u},  \kappa_u, \kappa_v \lvert \mathbf{y}) \propto p(\mathbf{y}, \mathbf{u}, \boldsymbol{\eta}, \kappa_u, \kappa_v) \propto \\
+&\kappa_u^{(n-1)/2 + \alpha_u - 1}\kappa_v^{n/2 + \alpha_v - 1}\exp \Big(-\beta_u \kappa_u -\beta_v \kappa_v -\frac{\kappa_v}{2}(\boldsymbol{\eta} - \mathbf{u})^T(\boldsymbol{\eta} - \mathbf{u}) - \frac{\kappa_u}{2}\mathbf{u}^T R \mathbf{u}+ \sum_i (y_i \eta_i - E_i \exp(\eta_i) )\Big  ).
+\end{align*}
 
 ## b)
-
-Before proceeding, we note that we can approximate the function 
+Due to the non-normality, sampling from the posterior distribution will require a Metropolis–Hastings step. To obtain a proposal distribution that is easy to sample from, here a Gaussian, we note that we can approximate the function 
 
 $$f(\eta_i) = y_i \eta_i - E_i \exp(\eta_i)$$
 
-by its 2nd order Taylor expansion around $z_i$, 
+by its 2nd order Taylor expansion, $\tilde{f}(\eta_i)$, around a point $z_i$. The approximation can be written as, 
 
-$$\tilde{f}(\eta_i) = y_i z_i - E_i \exp(z_i) + (y_i - E_i \exp(z_i)) (\eta_i - z_i) - E_i \exp(z_i) \frac{(\eta_i - z_i)^2}{2} \\
-= E_i \exp(z_i)(z_i - 1 - \frac{z_i^2}{2}) + \eta_i (y_i + E_i \exp(z_i)(z_i - 1)) - \frac{\eta_i^2}{2} E_i \exp (z_i) \\
-= a_i + b_i \eta_i - \frac{c_i}{2}\eta_i^2,$$
-
-where $a_i = E_i \exp(z_i)(z_i - 1 - \frac{z_i^2}{2})$, $b_i = (y_i + E_i \exp(z_i)(z_i - 1))$, $c_i = E_i \exp (z_i)$.
+\begin{align*}\tilde{f}(\eta_i) &= y_i z_i - E_i \exp(z_i) + (y_i - E_i \exp(z_i)) (\eta_i - z_i) - E_i \exp(z_i) \frac{(\eta_i - z_i)^2}{2} \\
+&= E_i \exp(z_i)(z_i - 1 - \frac{z_i^2}{2}) + \eta_i (y_i + E_i \exp(z_i)(z_i - 1)) - \frac{\eta_i^2}{2} E_i \exp (z_i) \\
+&= a_i + b_i \eta_i - \frac{c_i}{2}\eta_i^2,
+\end{align*}
+where $a_i = E_i \exp(z_i)(z_i - 1 - \frac{z_i^2}{2})$, $b_i = y_i + E_i \exp(z_i)(z_i - 1)$ and $c_i = E_i \exp (z_i)$.
 
 ## c)
 
@@ -133,31 +132,31 @@ The full conditional of $\kappa_u$ can be computed by
 $$ p(\kappa_u \lvert \boldsymbol{\eta}, \mathbf{u},  \kappa_v, \mathbf{y}) = \frac{p(\boldsymbol{\eta}, \mathbf{u},  \kappa_u, \kappa_v \lvert \mathbf{y})}{ \int p(\boldsymbol{\eta}, \mathbf{u}, \kappa_v, \kappa_u \lvert \mathbf{y})d\kappa_u} \propto  p(\boldsymbol{\eta}, \mathbf{u},  \kappa_u, \kappa_v \lvert \mathbf{y})$$
 We use the fact that any factor in the posterior not containing $\kappa_u$ are now constants and get
 
-$$ p(\kappa_u \lvert \boldsymbol{\eta}, \mathbf{u},  \kappa_v, \mathbf{y}) \propto \kappa_u^{\frac{n-1}{2} + \alpha_u - 1} \exp \big(- \kappa_u (\beta_u + \frac{1}{2}\mathbf{u}^T R \mathbf{u})\big), $$
+$$ p(\kappa_u \lvert \boldsymbol{\eta}, \mathbf{u},  \kappa_v, \mathbf{y})\propto  p(\boldsymbol{\eta}, \mathbf{u},  \kappa_u, \kappa_v \lvert \mathbf{y}) \propto \kappa_u^{\frac{n-1}{2} + \alpha_u - 1} \exp \big(- \kappa_u (\beta_u + \frac{1}{2}\mathbf{u}^T R \mathbf{u})\big), $$
 which we recognize to be the density of a gamma-distributed variable with parameters $\frac{n-1}{2}+\alpha_u$ and $\beta_u + \frac{1}{2}\mathbf{u}^T R \mathbf{u}$.
 
-We do the same for $\kappa_v$ 
+We follow along the same lines for $\kappa_v$, and get 
 
 $$p(\kappa_v \lvert \boldsymbol{\eta}, \mathbf{u},  \kappa_u, \mathbf{y}) \propto \kappa_v^{\frac{n}{2} + \alpha_v - 1} \exp \big(- \kappa_v (\beta_v + \frac{1}{2}(\boldsymbol{\eta} - \mathbf{u})^T (\boldsymbol{\eta} - \mathbf{u}))\big),$$
 which we recognize to be the density of a gamma-distributed variables with parameters $\frac{n}{2}+\alpha_v$ and $\beta_v + \frac{1}{2}(\boldsymbol{\eta} - \mathbf{u})^T (\boldsymbol{\eta} - \mathbf{u})$.
 
-We do the same for $\mathbf{u}$
+Again, we do the same for $\mathbf{u}$, and get
 
 $$p(\mathbf{u} \lvert \boldsymbol{\eta},  \kappa_u, \kappa_v, \mathbf{y}) \propto \exp \big (\kappa_v \boldsymbol{\eta}^T \mathbf{u} - \frac{\kappa_v}{2} \mathbf{u}^T \mathbf{u} - \frac{\kappa_u}{2} \mathbf{u}^T R \mathbf{u}\big) \\
 = \exp(\kappa_v \boldsymbol{\eta}^T \mathbf{u} - \frac{1}{2}\mathbf{u}^T (\kappa_v I + \kappa_u R) \mathbf{u} \big),$$
 
 which we recognize to be a normal density in canonical form with $\mathbf{b} = \kappa_v \boldsymbol{\eta}$ and $A = \kappa_v I + \kappa_u R$.
 
-We do the same for $\boldsymbol{\eta}$
+Finally, we repeat the procedure for $\boldsymbol{\eta}$, and get
 
 $$p(\boldsymbol{\eta} \lvert \mathbf{u},  \kappa_u, \kappa_v, \mathbf{y}) \propto \exp \Big (\kappa_v\boldsymbol{\eta}^T\mathbf{u} -\frac{\kappa_v}{2}\boldsymbol{\eta}^T \boldsymbol{\eta} + \sum_i (y_i \eta_i - E_i \exp(\eta_i))\Big) \\
 = \exp \Big (\kappa_v\boldsymbol{\eta}^T\mathbf{u} -\frac{1}{2}\boldsymbol{\eta}^T (\kappa_v I) \boldsymbol{\eta} + \boldsymbol{\eta}^T\mathbf{y} - \exp(\boldsymbol{\eta})^T\mathbf{E}\Big)$$
 
-Using the Taylor expansion of $\mathbf{y}^T \boldsymbol{\eta} - \exp(\boldsymbol{\eta})^T \mathbf{E}$ we described in b), we may insert this into $p(\boldsymbol{\eta} \lvert \cdot )$ to create the approximation $q(\boldsymbol{\eta}\lvert \mathbf{z}, \cdot)$,
+Using the Taylor expansion of $\mathbf{y}^T \boldsymbol{\eta} - \exp(\boldsymbol{\eta})^T \mathbf{E}$, as described in b), we may insert this into $p(\boldsymbol{\eta} \lvert \cdot )$ to create the approximation $q(\boldsymbol{\eta}\lvert \mathbf{z}, \cdot)$,
 
-$$ q(\boldsymbol{\eta} \lvert \mathbf{z}, \mathbf{u},  \kappa_u, \kappa_v, \mathbf{y}) \propto \exp \big (\boldsymbol{\eta}^T(\kappa_v\mathbf{u} + \mathbf{b}) -\frac{1}{2}\boldsymbol{\eta}^T (\kappa_v I + \text{diag}(\mathbf{c})) \boldsymbol{\eta} \big ),$$
+$$ q(\boldsymbol{\eta} \lvert \mathbf{z}, \mathbf{u},  \kappa_u, \kappa_v, \mathbf{y}) \propto \exp \big (\boldsymbol{\eta}^T(\kappa_v\mathbf{u} + \mathbf{b}) -\frac{1}{2}\boldsymbol{\eta}^T \big(\kappa_v I + \text{diag}(\mathbf{c})\big) \boldsymbol{\eta} \big ),$$
 
-where $\mathbf{b} = (b_1, \dots, b_n)^T$, $b_i = y_i + E_i \exp(z_i)(z_i - 1)$, $\mathbf{c} = (c_1, \dots, c_n)$, $c_i = E_i \exp(z_i)$, and $\text{diag}(\mathbf{c})$ is the matrix with the elements of $\mathbf{c}$ on the diagonal and zeros elsewhere. 
+where $\mathbf{b} = (b_1, \dots, b_n)^T$, $b_i = y_i + E_i \exp(z_i)(z_i - 1)$, $\mathbf{c} = (c_1, \dots, c_n)^T$, $c_i = E_i \exp(z_i)$, and $\text{diag}(\mathbf{c})$ is the matrix with the elements of $\mathbf{c}$ on the diagonal and zeros elsewhere. 
 
 We observe that $q(\boldsymbol{\eta} \lvert \cdot)$ is a normal density written in canonical form and thus easily sampled from. We also observe that as the $\exp(\cdot)$ is a continuous transform, $q(\boldsymbol{\eta} \lvert \mathbf{z}, \cdot)$ will converge to $p(\boldsymbol{\eta} \lvert \cdot)$ as $\mathbf{z}$ gets increasingly close to $\boldsymbol{\eta}$. Thus, for a reasonably good $\mathbf{z}$,  $q(\boldsymbol{\eta} \lvert \mathbf{z})$ will be a good choice for a proposal density for $p(\boldsymbol{\eta} \lvert \cdot)$. 
 
