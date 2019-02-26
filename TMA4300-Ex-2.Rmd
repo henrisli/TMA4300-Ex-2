@@ -134,11 +134,13 @@ $$ p(\kappa_u \lvert \boldsymbol{\eta}, \mathbf{u},  \kappa_v, \mathbf{y}) = \fr
 We use the fact that any factor in the posterior not containing $\kappa_u$ are now constants and get
 
 $$ p(\kappa_u \lvert \boldsymbol{\eta}, \mathbf{u},  \kappa_v, \mathbf{y}) \propto \kappa_u^{\frac{n-1}{2} + \alpha_u - 1} \exp \big(- \kappa_u (\beta_u + \frac{1}{2}\mathbf{u}^T R \mathbf{u})\big), $$
+
 which we recognize to be the density of a gamma-distributed variable with parameters $\frac{n-1}{2}+\alpha_u$ and $\beta_u + \frac{1}{2}\mathbf{u}^T R \mathbf{u}$.
 
 We do the same for $\kappa_v$ 
 
 $$p(\kappa_v \lvert \boldsymbol{\eta}, \mathbf{u},  \kappa_u, \mathbf{y}) \propto \kappa_v^{\frac{n}{2} + \alpha_v - 1} \exp \big(- \kappa_v (\beta_v + \frac{1}{2}(\boldsymbol{\eta} - \mathbf{u})^T (\boldsymbol{\eta} - \mathbf{u}))\big),$$
+
 which we recognize to be the density of a gamma-distributed variables with parameters $\frac{n}{2}+\alpha_v$ and $\beta_v + \frac{1}{2}(\boldsymbol{\eta} - \mathbf{u})^T (\boldsymbol{\eta} - \mathbf{u})$.
 
 We do the same for $\mathbf{u}$
@@ -163,5 +165,146 @@ We observe that $q(\boldsymbol{\eta} \lvert \cdot)$ is a normal density written 
 
 #Exercise 2
 
-We implement a Gibbs sampling algorithm with individual parameters updates using the full conditional for $\kappa_u$, $\kappa_v$ and $\mathbf{u}$. We update $\boldsymbol{\eta}$ using Metropolis-Hastings with $q(\boldsymbol{\eta} \lvert \mathbf{z}, \cdot)$ as the proposal density. We set $\mathbf{z} = \boldsymbol{\eta}^{(m-1)}$
+We implement a Gibbs sampling algorithm with individual parameters updates using the full conditional for $\kappa_u$, $\kappa_v$ and $\mathbf{u}$. We update $\boldsymbol{\eta}$ using Metropolis-Hastings with $q(\boldsymbol{\eta} \lvert 
+\mathbf{z}, \cdot)$ as the proposal density. We set $\mathbf{z} = \boldsymbol{\eta}^{(m-1)}$
+
+```{r}
+head(Oral)
+```
+
+
+```{r}
+# Setup
+
+load("tma4300_ex2_Rmatrix.Rdata")
+n = length(Oral$SMR)
+alpha_u = 1
+alpha_v = 1
+beta_u = 0.01
+beta_v = 0.01
+```
+
+
+```{r}
+sample_u = function(kappa_v, kappa_u, eta){
+  #Samples from the canonical normal
+  b = kappa_v * eta
+  A = kappa_v * diag(n) + kappa_u * R
+  res = rmvnorm.canonical(1, b, A)
+  return(t(res))
+}
+
+sample_eta = function(kappa_v, u, z){
+  b_taylor = Oral$Y + Oral$E * exp(z) * (z - 1)
+  c_taylor = Oral$E * exp(z)
+  
+  b_arg_sampler = kappa_v * u + b_taylor
+  A_arg_sampler = kappa_v * diag(n) + diag(c_taylor)
+  
+  return(as.vector(rmvnorm.canonical(1, b_arg_sampler, A_arg_sampler)))
+}
+
+log_full_conditional_eta = function(eta, kappa_v, u, log=T){
+  res = kappa_v * eta %*% u - 1/2 * t(eta) %*% (kappa_v * diag(n)) %*% eta + eta%*% Oral$Y - t(exp(eta))%*%Oral$E
+  if (log){
+    return(res)
+  }
+  else {
+    return(exp(res))
+  }
+}
+
+log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
+  b_taylor = Oral$Y + Oral$E * exp(z) * (z - 1)
+  c_taylor = Oral$E * exp(z)
+  
+  b_canonical = kappa_v * u + b_taylor
+  A_canonical = kappa_v * diag(n) + diag(c_taylor)
+  
+  res = eta %*% b_canonical - 1/2 * t(eta) %*% A_canonical %*% eta
+  if (log){
+    return(res)
+  }
+  else {
+    return(exp(res))
+  }
+}
+
+#Set start values
+kappau_start = alpha_u / beta_u
+kappav_start = alpha_v / beta_v
+u_start = seq(from=1, to=1, length.out = length(Oral$SMR))
+eta_start = log(Oral$SMR)
+
+#Set number of iterations
+N_iter = 1000
+
+u = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
+eta = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
+kappau = vector(mode = "double", length = N_iter)
+kappav = vector(mode = "double", length = N_iter)
+updated_eta = vector(length = N_iter)
+times = vector(mode = "double", length = N_iter)
+
+
+u[1,] = u_start
+eta[1,] = eta_start
+kappau[1] = kappau_start
+kappav[1] = kappav_start
+
+
+
+#Run the MCMC algorithm
+for (i in 2:N_iter) {
+  t0 = as.numeric(Sys.time())
+    #Sample kappau
+  kappau[i] = rgamma(1, (n-1)/2+alpha_u, beta_u + 1/2 * t(u[i-1,])%*%R%*%u[i-1,])
+  
+  #Sample kappav
+  kappav[i] = rgamma(1, n/2 + alpha_v, beta_v + 1/2 * t(eta[i-1,] - u[i-1,])%*%(eta[i-1,] - u[i-1,]))
+  
+  #Sample v
+  #cat(kappav[i], kappau[i], eta[i-1,])
+  res = sample_u(kappav[i], kappau[i], eta[i-1,])
+  u[i, ] = res
+  
+  #Sample eta
+  z = eta[i-1,]
+  eta_prop = sample_eta(kappav[i], u[i,], z)
+  
+  logp1 = log_full_conditional_eta(eta_prop, kappav[i], u[i,])
+  logp2 = log_full_conditional_eta(z, kappav[i], u[i,])
+  logp3 = log_full_conditional_eta_approx(z, eta_prop, u[i,], kappav[i])
+  logp4 = log_full_conditional_eta_approx(eta_prop, z, u[i,], kappav[i])
+  
+  log_alpha = min(0, logp1 - logp2 + logp3 - logp4)
+  #cat(log_alpha, ", ")
+  r = runif(1)
+  #cat(log(r) - log_alpha, ", ")
+  if (log(r) < log_alpha){
+    updated_eta[i] = TRUE
+    eta[i,] = eta_prop
+  }
+  else{
+    eta[i,] = eta[i-1,]
+  }
+  times[i] = as.numeric(Sys.time()) - t0 
+  t0 = as.numeric(Sys.time())
+}
+```
+
+
+```{r}
+post_mean_eta = apply(eta[800:1000,], 2, mean)
+post_mean_eta
+
+post_mean_u = apply(u[800:1000,], 2, mean)
+
+#germany.plot(post_mean_eta, col=col, legend=TRUE)
+germany.plot(post_mean_u, col=col, legend=TRUE)
+germany.plot(post_mean_eta, col=col, legend=TRUE)
+```
+```{r}
+
+```
 
