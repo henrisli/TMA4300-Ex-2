@@ -322,7 +322,7 @@ acf(kappau, lag.max=200)
 gw = geweke.diag(kappau)
 cat("Geweke's Convergence Diagnostic for kappa_v \n")
 cat("zscores:", gw$z, "\n")
-cat("pvals:", 2*(1-pnorm(gw$z)))
+cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
 
 
@@ -339,7 +339,7 @@ acf(kappav, lag.max=200)
 gw = geweke.diag(kappav)
 cat("Geweke's Convergence Diagnostic for kappa_v \n")
 cat("zscores:", gw$z, "\n")
-cat("pvals:", 2*(1-pnorm(gw$z)))
+cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
 
 ```{r}
@@ -356,7 +356,7 @@ ggplot(df4, aes(x = N, y = u, shape = shape, col=col)) + geom_point() + scale_sh
 
 ```{r}
 df5 = data.frame(u = u[,random_indexes])
-head(df5)
+#head(df5)
 acf(df5, lag.max = 200)
 ```
 
@@ -364,7 +364,7 @@ acf(df5, lag.max = 200)
 gw = geweke.diag(df5)
 cat("Geweke's Convergence Diagnostic for u \n")
 cat("zscores:", gw$z, "\n")
-cat("pvals:", 2*(1-pnorm(gw$z)))
+cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
 
 
@@ -390,7 +390,7 @@ acf(df7, lag.max = 200)
 gw = geweke.diag(df7)
 cat("Geweke's Convergence Diagnostic for eta \n")
 cat("zscores:", gw$z, "\n")
-cat("pvals:", 2*(1-pnorm(gw$z)))
+cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
 
 # 4) Effective sample size
