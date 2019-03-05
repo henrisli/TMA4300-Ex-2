@@ -18,6 +18,7 @@ library(formatR)
 showsol <- FALSE
 library(knitr)
 library(ggplot2)
+library(coda)
 opts_chunk$set(tidy.opts = list(width.cutoff = 68), tidy = TRUE, warning = FALSE, error = FALSE, message = FALSE, echo = TRUE)
 ```
 
@@ -69,7 +70,7 @@ With $\alpha_u = \alpha_v = 1$ and $\beta_u = \beta_v = 0.01$.
 
 We wish to analyse the data and its underlying spatial structure by implementing a Gibbs sampler with individual parameter  updates based on the full conditional  distributions. 
 
-# Exercise 1
+# 1) Derivations
 
 ## a)
 
@@ -162,7 +163,7 @@ where $\mathbf{b} = (b_1, \dots, b_n)^T$, $b_i = y_i + E_i \exp(z_i)(z_i - 1)$, 
 
 We observe that $q(\boldsymbol{\eta} \lvert \cdot)$ is a normal density written in canonical form and thus easily sampled from. We also observe that as the $\exp(\cdot)$ is a continuous transform, $q(\boldsymbol{\eta} \lvert \mathbf{z}, \cdot)$ will converge to $p(\boldsymbol{\eta} \lvert \cdot)$ as $\mathbf{z}$ gets increasingly close to $\boldsymbol{\eta}$. Thus, for a reasonably good $\mathbf{z}$,  $q(\boldsymbol{\eta} \lvert \mathbf{z})$ will be a good choice for a proposal density for $p(\boldsymbol{\eta} \lvert \cdot)$. 
 
-#Exercise 2
+# 2) Implementation of the MCMC sampler 
 
 We implement a Gibbs sampling algorithm with individual parameter updates using the full conditional for $\kappa_u$, $\kappa_v$ and $\mathbf{u}$. We update $\boldsymbol{\eta}$ using Metropolis-Hastings with $q(\boldsymbol{\eta} \lvert \mathbf{z}, \cdot)$ as the proposal density. We set $\mathbf{z} = \boldsymbol{\eta}^{(m-1)}$.
 
@@ -184,6 +185,8 @@ beta_v = 0.01
 
 
 ```{r, echo = T, eval = T}
+source("dmvnorm.R")
+
 sample_u = function(kappa_v, kappa_u, eta){
   #Samples from the canonical normal
   b = kappa_v * eta
@@ -219,7 +222,10 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
   b_canonical = kappa_v * u + b_taylor
   A_canonical = kappa_v * diag.spam(n) + diag.spam(c_taylor)
   
-  res = eta %*% b_canonical - 1/2 * t(eta) %*% A_canonical %*% eta
+  #SKRIVE INN DMVNORM HER
+  #res = eta %*% b_canonical - 1/2 * t(eta) %*% A_canonical %*% eta
+  res = dmvnorm.canonical(eta, b_canonical, A_canonical)
+  
   if (log){
     return(res)
   }
@@ -297,6 +303,7 @@ for (i in 2:N_iter) {
 }
 ```
 
+# 3) Convergence Diagnostics
 
 ```{r}
 df1 = data.frame(kappa_u = kappau, N = 1:N_iter)
@@ -311,6 +318,13 @@ ggplot(df2, aes(x = N, y = kappa_u)) + geom_point()
 acf(kappau, lag.max=200)
 ```
 
+```{r}
+gw = geweke.diag(kappau)
+cat("Geweke's Convergence Diagnostic for kappa_v \n")
+cat("zscores:", gw$z, "\n")
+cat("pvals:", 2*(1-pnorm(gw$z)))
+```
+
 
 ```{r}
 df3 = data.frame(kappa_v = kappav, N = 1:N_iter)
@@ -321,6 +335,12 @@ ggplot(df3, aes(x = N, y = kappa_v)) + geom_point()
 acf(kappav, lag.max=200)
 ```
 
+```{r}
+gw = geweke.diag(kappav)
+cat("Geweke's Convergence Diagnostic for kappa_v \n")
+cat("zscores:", gw$z, "\n")
+cat("pvals:", 2*(1-pnorm(gw$z)))
+```
 
 ```{r}
 random_indexes = sample(1:length(Oral$Y), 3, replace=F)
@@ -338,6 +358,13 @@ ggplot(df4, aes(x = N, y = u, shape = shape, col=col)) + geom_point() + scale_sh
 df5 = data.frame(u = u[,random_indexes])
 head(df5)
 acf(df5, lag.max = 200)
+```
+
+```{r}
+gw = geweke.diag(df5)
+cat("Geweke's Convergence Diagnostic for u \n")
+cat("zscores:", gw$z, "\n")
+cat("pvals:", 2*(1-pnorm(gw$z)))
 ```
 
 
@@ -360,10 +387,15 @@ acf(df7, lag.max = 200)
 ```
 
 ```{r}
-library(coda)
-geweke.diag(eta)
+gw = geweke.diag(df7)
+cat("Geweke's Convergence Diagnostic for eta \n")
+cat("zscores:", gw$z, "\n")
+cat("pvals:", 2*(1-pnorm(gw$z)))
 ```
 
+# 4) Effective sample size
+
+# 5) Interpretation of results 
 
 ```{r}
 post_mean_eta = apply(eta[1000:10000,], 2, mean)
