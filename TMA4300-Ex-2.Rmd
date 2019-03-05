@@ -1,4 +1,4 @@
---- 
+﻿--- 
 title: 'TMA4300 Computer Intensive Statistical Methods Exercise 2, Spring 2019'
 output:
   pdf_document:
@@ -345,6 +345,14 @@ for (i in 1:3){
 }
 ggplot(df4, aes(x = N, y = u, shape = shape, col=col)) + geom_point() + scale_shape(solid=F) + guides(shape = F)
 ```
+
+```{r}
+df5 = data.frame(u = u[,random_indexes])
+head(df5)
+acf(df5, lag.max = 200)
+```
+
+
 ```{r}
 random_indexes = sort(sample(1:length(Oral$Y), 3, replace=F))
 df4 = data.frame()
@@ -354,6 +362,17 @@ for (i in 1:3){
   df4 = rbind(df4, df)
 }
 ggplot(df4, aes(x = N, y = eta, shape = shape, col=col)) + geom_point() + scale_shape(solid=F)+ guides(shape = F)
+```
+
+```{r}
+df7 = data.frame(eta = eta[,random_indexes])
+head(df7)
+acf(df7, lag.max = 200)
+```
+
+```{r}
+library(coda)
+geweke.diag(eta)
 ```
 
 
