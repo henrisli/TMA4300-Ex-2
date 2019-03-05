@@ -17,6 +17,7 @@ subtitle: 'Group members: Henrik Syversveen Lie, Mikal Solberg Stapnes'
 library(formatR)
 showsol <- FALSE
 library(knitr)
+library(ggplot2)
 opts_chunk$set(tidy.opts = list(width.cutoff = 68), tidy = TRUE, warning = FALSE, error = FALSE, message = FALSE, echo = TRUE)
 ```
 
@@ -187,7 +188,7 @@ beta_v = 0.01
 sample_u = function(kappa_v, kappa_u, eta){
   #Samples from the canonical normal
   b = kappa_v * eta
-  A = kappa_v * diag(n) + kappa_u * R
+  A = kappa_v * diag.spam(n) + kappa_u * R
   res = rmvnorm.canonical(1, b, A)
   return(t(res))
 }
@@ -197,13 +198,13 @@ sample_eta = function(kappa_v, u, z){
   c_taylor = Oral$E * exp(z)
   
   b_arg_sampler = kappa_v * u + b_taylor
-  A_arg_sampler = kappa_v * diag(n) + diag(c_taylor)
+  A_arg_sampler = kappa_v * diag.spam(n) + diag(c_taylor)
   
   return(as.vector(rmvnorm.canonical(1, b_arg_sampler, A_arg_sampler)))
 }
 
 log_full_conditional_eta = function(eta, kappa_v, u, log=T){
-  res = kappa_v * eta %*% u - 1/2 * t(eta) %*% (kappa_v * diag(n)) %*% eta + eta%*% Oral$Y - t(exp(eta))%*%Oral$E
+  res = kappa_v * eta %*% u - 1/2 * t(eta) %*% (kappa_v * diag.spam(n)) %*% eta + eta%*% Oral$Y - t(exp(eta))%*%Oral$E
   if (log){
     return(res)
   }
@@ -217,7 +218,7 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
   c_taylor = Oral$E * exp(z)
   
   b_canonical = kappa_v * u + b_taylor
-  A_canonical = kappa_v * diag(n) + diag(c_taylor)
+  A_canonical = kappa_v * diag.spam(n) + diag.spam(c_taylor)
   
   res = eta %*% b_canonical - 1/2 * t(eta) %*% A_canonical %*% eta
   if (log){
@@ -228,22 +229,23 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
   }
 }
 
-#Set start values
-kappau_start = alpha_u / beta_u
-kappav_start = alpha_v / beta_v
-u_start = seq(from=1, to=1, length.out = length(Oral$SMR))
-eta_start = log(Oral$SMR)
-
 #Set number of iterations
-N_iter = 1000
+N_iter = 10000
 
+#Allocate vectors and arrays 
 u = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
 eta = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
 kappau = vector(mode = "double", length = N_iter)
 kappav = vector(mode = "double", length = N_iter)
 updated_eta = vector(length = N_iter)
+accept_prob = vector(length = N_iter)
 times = vector(mode = "double", length = N_iter)
 
+#Set start values
+kappau_start = alpha_u / beta_u
+kappav_start = alpha_v / beta_v
+u_start = seq(from=1, to=1, length.out = length(Oral$SMR))
+eta_start = log(Oral$SMR)
 
 u[1,] = u_start
 eta[1,] = eta_start
@@ -276,7 +278,13 @@ for (i in 2:N_iter) {
   logp4 = log_full_conditional_eta_approx(eta_prop, z, u[i,], kappav[i])
   
   log_alpha = min(0, logp1 - logp2 + logp3 - logp4)
-  #cat(log_alpha, ", ")
+  accept_prob[i] = exp(log_alpha)
+  
+  #cat("log1",logp1, " log", logp2, "log3",logp3, " log4", logp4)
+  if(!(i%%100)){
+    cat(i, end=" ")
+  }
+  #cat("logdens: ", log_alpha, ", ")
   r = runif(1)
   #cat(log(r) - log_alpha, ", ")
   if (log(r) < log_alpha){
@@ -293,14 +301,61 @@ for (i in 2:N_iter) {
 
 
 ```{r}
-post_mean_eta = apply(eta[800:1000,], 2, mean)
-post_mean_eta
+df1 = data.frame(kappa_u = kappau, N = 1:N_iter)
+ggplot(df1, aes(x = N, y = kappa_u)) + geom_point()
+```
+```{r}
+df2 = data.frame(kappa_u = kappau[500:N_iter], N = 500:N_iter)
+ggplot(df2, aes(x = N, y = kappa_u)) + geom_point()
+```
 
-post_mean_u = apply(u[800:1000,], 2, mean)
+```{r}
+acf(kappau)
+```
+
+
+```{r}
+df3 = data.frame(kappa_v = kappav, N = 1:N_iter)
+ggplot(df3, aes(x = N, y = kappa_v)) + geom_point()
+```
+
+```{r}
+acf(kappav)
+```
+
+
+```{r}
+random_indexes = sample(1:length(Oral$Y), 3, replace=F)
+df4 = data.frame()
+for (i in 1:length(random_indexes)){
+  index = random_indexes[i]
+  df = data.frame(u = u[, index], N = 1:N_iter, shape = as.factor(i), col=as.factor(i))
+  df4 = rbind(df4, df)
+}
+ggplot(df4, aes(x = N, y = u, shape = shape, col=col)) + geom_point() + scale_shape(solid=F)
+```
+```{r}
+random_indexes = sample(1:length(Oral$Y), 3, replace=F)
+df4 = data.frame()
+for (i in 1:length(random_indexes)){
+  index = random_indexes[i]
+  df = data.frame(eta = eta[, index], N = 1:N_iter, shape = as.factor(i), col=as.factor(i))
+  df4 = rbind(df4, df)
+}
+ggplot(df4, aes(x = N, y = eta, shape = shape, col=col)) + geom_point() + scale_shape(solid=F)
+```
+
+
+```{r}
+post_mean_eta = apply(eta[1000:10000,], 2, mean)
+post_median_eta = apply(exp(eta[1000:10000,]), 2, median)
+
+post_mean_u = apply(u[1000:10000,], 2, mean)
+post_median_u = apply(exp(u[1000:10000,]), 2, median)
 
 #germany.plot(post_mean_eta, col=col, legend=TRUE)
-germany.plot(post_mean_u, col=col, legend=TRUE)
-germany.plot(post_mean_eta, col=col, legend=TRUE)
+germany.plot(post_median_u, col=col, legend=TRUE)
+germany.plot(post_median_eta, col=col, legend=TRUE)
 ```
 
 
