@@ -164,10 +164,10 @@ We observe that $q(\boldsymbol{\eta} \lvert \cdot)$ is a normal density written 
 
 #Exercise 2
 
-We implement a Gibbs sampling algorithm with individual parameter updates using the full conditional for $\kappa_u$, $\kappa_v$ and $\mathbf{u}$. We update $\boldsymbol{\eta}$ using Metropolis-Hastings with $q(\boldsymbol{\eta} \lvert \mathbf{z}, \cdot)$ as the proposal density. We set $\mathbf{z} = \boldsymbol{\eta}^{(m-1)}$.
+We implement a Gibbs sampling algorithm with individual parameter updates using the full conditional for $\kappa_u$, $\kappa_v$ and $\mathbf{u}$. We update $\boldsymbol{\eta}$ using Metropolis-Hastings with $q(\boldsymbol{\eta} \lvert \mathbf{z}, \cdot)$ as the proposal density. We set $\mathbf{z} = \boldsymbol{\eta}^{(m-1)}$, and do $N = 10000$ iterations.
 
 ```{r, echo = T, eval = T}
-head(Oral)
+#head(Oral)
 ```
 
 
@@ -296,51 +296,64 @@ for (i in 2:N_iter) {
   times[i] = as.numeric(Sys.time()) - t0 
 }
 ```
+We note that the code takes `r sum(times)` seconds, or `r sum(times)/60` minutes.
 
 
-```{r}
+# Exercise 3 (Convergence diagnostics)
+
+We now check a few diagnostic summaries for the precision parameters $\kappa_u$ and $\kappa_v$. We also do the same for three randomly chosen components of $\mathbf{u}$ and $\mathbf{v}$.
+
+First, we show a trace plot of $\kappa_u$. The values in the burn-in period are really large, so we display both a plot of the whole chain, and a plot where the first 500 values are removed.
+```{r, echo = T, eval = T, out.width = "50%"}
 df1 = data.frame(kappa_u = kappau, N = 1:N_iter)
 ggplot(df1, aes(x = N, y = kappa_u)) + geom_point()
+df12 = data.frame(kappa_u = kappau[500:N_iter], N = 500:N_iter)
+ggplot(df12, aes(x = N, y = kappa_u)) + geom_point()
 ```
-```{r}
-df2 = data.frame(kappa_u = kappau[500:N_iter], N = 500:N_iter)
-ggplot(df2, aes(x = N, y = kappa_u)) + geom_point()
+From the second plot, we suspect that the burn-in period might be somewhat over 500 iterations.
+
+We then display an autocorrelation plot for $\kappa_u$.
+```{r, echo = T, eval = T, out.width = "50%"}
+acf(kappau, lag.max = 60)
 ```
+From the plot, we see that we need to use only every $\sim 45$^th^ iteration to get a correlation which is not statistically significant.
 
-```{r}
-acf(kappau)
+We then move on to $\kappa_v$, and display both a plot of the whole chain, and a plot where the first 500 values are removed.
+```{r, echo = T, eval = T, out.width = "50%"}
+df2 = data.frame(kappa_v = kappav, N = 1:N_iter)
+ggplot(df2, aes(x = N, y = kappa_v)) + geom_point()
+df21 = data.frame(kappa_v = kappav[500:N_iter], N = 500:N_iter)
+ggplot(df21, aes(x = N, y = kappa_v)) + geom_point()
 ```
+Also here, we suspect that the burn-in period might be somewhat over 500 iterations.
 
-
-```{r}
-df3 = data.frame(kappa_v = kappav, N = 1:N_iter)
-ggplot(df3, aes(x = N, y = kappa_v)) + geom_point()
-```
-
-```{r}
+We then display an autocorrelation plot for $\kappa_v$.
+```{r, echo = T, eval = T, out.width = "50%"}
 acf(kappav)
+acf(kappav, lag.max = 1000)
 ```
+The plot shows that the samples of $\kappa_v$ are highly correlated.
 
 
 ```{r}
-random_indexes = sample(1:length(Oral$Y), 3, replace=F)
+random_indexes = sort(sample(1:length(Oral$Y), 3, replace=F))
 df4 = data.frame()
-for (i in 1:length(random_indexes)){
+for (i in 1:3){
   index = random_indexes[i]
-  df = data.frame(u = u[, index], N = 1:N_iter, shape = as.factor(i), col=as.factor(i))
+  df = data.frame(u = u[, index], N = 1:N_iter, shape = as.factor(i), col=as.factor(index))
   df4 = rbind(df4, df)
 }
-ggplot(df4, aes(x = N, y = u, shape = shape, col=col)) + geom_point() + scale_shape(solid=F)
+ggplot(df4, aes(x = N, y = u, shape = shape, col=col)) + geom_point() + scale_shape(solid=F) + guides(shape = F)
 ```
 ```{r}
-random_indexes = sample(1:length(Oral$Y), 3, replace=F)
+random_indexes = sort(sample(1:length(Oral$Y), 3, replace=F))
 df4 = data.frame()
-for (i in 1:length(random_indexes)){
+for (i in 1:3){
   index = random_indexes[i]
-  df = data.frame(eta = eta[, index], N = 1:N_iter, shape = as.factor(i), col=as.factor(i))
+  df = data.frame(eta = eta[, index], N = 1:N_iter, shape = as.factor(i), col=as.factor(index))
   df4 = rbind(df4, df)
 }
-ggplot(df4, aes(x = N, y = eta, shape = shape, col=col)) + geom_point() + scale_shape(solid=F)
+ggplot(df4, aes(x = N, y = eta, shape = shape, col=col)) + geom_point() + scale_shape(solid=F)+ guides(shape = F)
 ```
 
 
