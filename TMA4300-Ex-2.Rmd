@@ -310,7 +310,7 @@ ggplot(df2, aes(x = N, y = kappa_u)) + geom_point()
 ```
 
 ```{r}
-acf(kappau)
+acf(kappau, lag.max=200)
 ```
 
 
@@ -320,12 +320,13 @@ ggplot(df3, aes(x = N, y = kappa_v)) + geom_point()
 ```
 
 ```{r}
-acf(kappav)
+acf(kappav, lag.max=200)
 ```
 
 
 ```{r}
 random_indexes = sample(1:length(Oral$Y), 3, replace=F)
+cat("indexes: ", random_indexes)
 df4 = data.frame()
 for (i in 1:length(random_indexes)){
   index = random_indexes[i]
@@ -338,7 +339,7 @@ ggplot(df4, aes(x = N, y = u, shape = shape, col=col)) + geom_point() + scale_sh
 ```{r}
 df5 = data.frame(u = u[,random_indexes])
 head(df5)
-acf(df5)
+acf(df5, lag.max = 200)
 ```
 
 
@@ -357,9 +358,13 @@ ggplot(df6, aes(x = N, y = eta, shape = shape, col=col)) + geom_point() + scale_
 ```{r}
 df7 = data.frame(eta = eta[,random_indexes])
 head(df7)
-acf(df7)
+acf(df7, lag.max = 200)
 ```
 
+```{r}
+library(coda)
+geweke.diag(eta)
+```
 
 
 ```{r}
