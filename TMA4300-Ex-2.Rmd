@@ -24,6 +24,7 @@ opts_chunk$set(tidy.opts = list(width.cutoff = 68), tidy = TRUE, warning = FALSE
 
 
 ```{r, echo = F, eval = T, fig.align = "center", out.width = "80%"}
+set.seed(123)
 library(spam)         # load the data
 attach(Oral)          # allow direct referencing to Y and E# load some libraries to generate nice map plots
 library(fields, warn.conflict=FALSE)
@@ -314,6 +315,7 @@ df1 = data.frame(kappa_u = kappau, N = 1:N_iter)
 ggplot(df1, aes(x = N, y = kappa_u)) + geom_point()
 df12 = data.frame(kappa_u = kappau[500:N_iter], N = 500:N_iter)
 ggplot(df12, aes(x = N, y = kappa_u)) + geom_point()
+plot_grid(p1,p2,nrow = 1, ncol = 2)
 ```
 ```{r, echo = F, eval = T, out.width = "50%"}
 df1 = data.frame(kappa_u = kappau, N = 1:N_iter)
@@ -329,14 +331,18 @@ acf(kappau, lag.max = 60)
 ```
 From the plot, we see that we need to use only every $\sim 45$^th^ iteration to get a correlation which is not statistically significant.
 
-SKRIV NOE OM GEWEKE
-```{r, echo = T, eval = T}
+To conclude our diagnosis of the chain for $\kappa_u$, we check the chain for convergence by using the function `geweke.diag()` from the R package `coda`. The function provides a $z$-value, which we use to compute a corresponding $p$-value. Large $p$-values indicates that the chain has converged during the first $10\%$ iterations.
+```{r, echo = T, eval = F}
 gw = geweke.diag(kappau)
 cat("zscores:", gw$z, "\n")
 cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
-
-
+```{r, echo = F, eval = T}
+gw = geweke.diag(kappau)
+cat("zscores:", gw$z, "\n")
+cat("pvals:", 2*(1-pnorm(abs(gw$z))))
+```
+A $p$-value of `r 2*(1-pnorm(abs(gw$z)))` indicates that the chain did (not) converge during the first $10\%$ iterations.
 
 We then move on to $\kappa_v$, and display both a plot of the whole chain, and a plot where the first 500 values are removed.
 ```{r, echo = T, eval = F, out.width = "50%"}
@@ -366,16 +372,21 @@ acf(kappav, lag.max = 1000)
 The plot shows that the samples of $\kappa_v$ are highly correlated.
 
 
-SKRIV OM GEWEKE
-```{r, echo = T, eval = T}
+As a final diagnostic for $\kappa_v$ we conduct Geweke's Diagnostic.
+```{r, echo = T, eval = F}
 gw = geweke.diag(kappav)
 cat("zscores:", gw$z, "\n")
 cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
-
+```{r, echo = F, eval = T}
+gw = geweke.diag(kappav)
+cat("zscores:", gw$z, "\n")
+cat("pvals:", 2*(1-pnorm(abs(gw$z))))
+```
+A $p$-value of `r 2*(1-pnorm(abs(gw$z)))` indicates that the chain did (not) converge during the first $10\%$ iterations.
 
 We then draw three random components of $\mathbf{u}$ and $\boldsymbol \eta$ and plot trace plots, autocorrelation functions and use the function `geweke.diag()` to check for convergence.
-```{r, echo = T, eval = T, out.width = "50%", fig.align = "center"}
+```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:3u}Trace plot for three random components of u"}
 random_indexes = sort(sample(1:length(Oral$Y), 3, replace=F))
 df4 = data.frame()
 for (i in 1:3){
@@ -385,9 +396,9 @@ for (i in 1:3){
 }
 ggplot(df4, aes(x = N, y = u, shape = shape, col=col)) + geom_point() + scale_shape(solid=F) + guides(shape = F)
 ```
-The trace plot for three components of $\mathbf{u}$ looks correct. 
+The trace plot for three components of $\mathbf{u}$ looks correct, with a small burn-in period.
 
-
+We then plot an autocorrelation plot for the same three components.
 ```{r, echo = T, eval = F, out.width = "33%"}
 df5 = data.frame(u = u[,random_indexes])
 acf(u[,random_indexes[1]], lag.max = 200)
@@ -401,18 +412,23 @@ acf(u[,random_indexes[1]], lag.max = 200)
 acf(u[,random_indexes[2]], lag.max = 200)
 acf(u[,random_indexes[3]], lag.max = 200)
 ```
-The three components of $\mathbf{u}$ show varying degree of autocorrelation, but generally, all three components are highly autocorrelated.
+The three components of $\mathbf{u}$ show varying degree of autocorrelation, but generally, all three components are somewhat autocorrelated, although less correlated than $\kappa_v$.
 
-SKRIV OM GEWEKE
-```{r, echo = T, eval = T}
+As a final diagnostic, we conduct Geweke's Diagnostic to the three components.
+```{r, echo = T, eval = F}
 gw = geweke.diag(df5)
 cat("zscores:", gw$z, "\n")
 cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
+```{r, echo = F, eval = T}
+gw = geweke.diag(df5)
+cat("zscores:", gw$z, "\n")
+cat("pvals:", 2*(1-pnorm(abs(gw$z))))
+```
+$p$-values of `r 2*(1-pnorm(abs(gw$z)))` indicates that the chain converges during the first $10\%$ iterations for only component 89, and not for component 98 and 253 (DISSE TALLENE MÅ ENDRES FOR Å MATCHE NY SEED).
 
 
-```{r, echo = T, eval = T, out.width = "50%", fig.align = "center"}
-#random_indexes = sort(sample(1:length(Oral$Y), 3, replace=F))
+```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:3eta}Trace plot for three random components of eta"}
 df4 = data.frame()
 for (i in 1:3){
   index = random_indexes[i]
@@ -421,6 +437,7 @@ for (i in 1:3){
 }
 ggplot(df4, aes(x = N, y = eta, shape = shape, col=col)) + geom_point() + scale_shape(solid=F)+ guides(shape = F)
 ```
+The trace plot of the three components of $\boldsymbol \eta$ in figure \ref{fig:3eta} looks correct, with a small burn-in period.
 
 ```{r, echo = T, eval = F}
 df7 = data.frame(eta = eta[,random_indexes])
@@ -431,6 +448,7 @@ acf(eta[,random_indexes[1]], lag.max = 200)
 acf(eta[,random_indexes[2]], lag.max = 200)
 acf(eta[,random_indexes[3]], lag.max = 200)
 ```
+
 ```{r, echo = F, eval = T, out.width = "33%"}
 df7 = data.frame(eta = eta[,random_indexes])
 acf(eta[,random_indexes[1]], lag.max = 200)
@@ -440,33 +458,50 @@ acf(eta[,random_indexes[3]], lag.max = 200)
 
 Same as for the components of $\mathbf{u}$, the three components of $\boldsymbol \eta$ show varying degree of autocorrelation, but generally, all three components are highly autocorrelated.
 
-SKRIV OM GEWEKE
+Same as for the components of $\mathbf{u}$, the three components of $\boldsymbol \eta$ show varying degree of autocorrelation, with some being highly correlated and others almost uncorrelated (SKRIV OM BASERT PÅ NY SAMPLE).
+
+Finally, the Geweke Diagnostic for the three components of $\boldsymbol \eta$ shows the following.
 ```{r, echo = T, eval = T}
 gw = geweke.diag(df7)
 cat("zscores:", gw$z, "\n")
 cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
+$p$-values of `r 2*(1-pnorm(abs(gw$z)))` indicates that the chain converges during the first $10\%$ iterations for only component 89, and not for component 98 and 253 (DISSE TALLENE MÅ ENDRES FOR Å MATCHE NY SEED).
+
+SOME CONCLUDING REMARKS TO SUM IT ALL UP
 
 # Exercise 4 (Effective sample size)
+To assess the quality of the samples from our Markov chain, we calculate the effective sample size for the precision parameters $\kappa_u$ and $\kappa_v$ by using the function `effectiveSize()` from the `coda` library.
 
-```{r}
-library(coda)
-ESS_kappau = effectiveSize(kappau)
-ESS_kappav = effectiveSize(kappav)
+```{r, echo = T, eval = F}
+running_time = sum(times)
+cat("ESS of kappa u: ", effectiveSize(kappau), "\n")
+cat("ESS of kappa_v: ", effectiveSize(kappav))
 ```
 
-```{r}
+
+```{r, echo = F, eval = T}
+cat("ESS of kappa u: ", effectiveSize(kappau), "\n")
+cat("ESS of kappa_v: ", effectiveSize(kappav))
+```
+The ESS is the estimated number of independent samples needed to obtain a parameter estimate with the same precision as the MCMC estimate based on $N$ dependent samples. In our case, $N=10000$, which means that the quality of our $\kappa_u$ sample is as good as `r round(effectiveSize(kappau))` independent samples. Also, our $\kappa_v$ sample is as good as `r round(effectiveSize(kappav))` independent samples. The $\kappa_u$ samples are better than the $\kappa_v$ samples, which also could be seen by the fact that the $\kappa_u$ samples are much less correlated than the $\kappa_v$ samples.
+
+How could the MCMC sampler be changed to possibly improve the ESS values??!?!?!?!?!
+
+We also compute the relative ESS, which is the ESS divided by the running time of the MCMC algorithm. The relative ESS can be interpreted as a measure for the number of independent samples produced by the algorithm per second. We get the following values for the relative ESS of $\kappa_u$ and $\kappa_v$.
+```{r, echo = T, eval = F}
 running_time = sum(times)
 
-cat("kappau \n")
-cat(running_time, "\n")
-cat(ESS_kappau / running_time, "\n")
-
-cat("kappav \n")
-cat(running_time, "\n")
-cat(ESS_kappav / running_time)
+cat("Relative ESS of kappa u: ", effectiveSize(kappau) / running_time, "\n")
+cat("Relative ESS of kappa v: ", effectiveSize(kappav) / running_time)
 ```
+```{r, echo = F, eval = T}
+running_time = sum(times)
 
+cat("Relative ESS of kappa u: ", effectiveSize(kappau) / running_time, "\n")
+cat("Relative ESS of kappa v: ", effectiveSize(kappav) / running_time)
+```
+This means that the MCMC algorithm produces the equivalent of `r effectiveSize(kappau) / running_time` independent samples for $\kappa_u$ per second, and the equivalent of `r effectiveSize(kappav) / running_time` independent samples for $\kappa_v$ per second.
 
 # Exercise 5 (Interpretation of results)
 
@@ -479,7 +514,7 @@ post_median_eta = apply(exp(eta[1000:10000,]), 2, median)
 post_mean_u = apply(exp(u[1000:10000,]), 2, mean)
 post_median_u = apply(exp(u[1000:10000,]), 2, median)
 
-#germany.plot(post_mean_eta, col=col, legend=TRUE)
+germany.plot(post_mean_eta, col=col, legend=TRUE)
 germany.plot(post_median_u, col=col, legend=TRUE)
 ```
 
@@ -505,7 +540,7 @@ res <- inla(formula,family="poisson", E = Oral$E, data=Oral)
 # Look at results
 summary(res)
 # Look at the estimated marginal posterior distributions
-plot(res$marginals.fixed$`(Intercept)`) 
+plot(res$marginals.fixed$`(Intercept)`)
 hist(kappau)
 ```
 
