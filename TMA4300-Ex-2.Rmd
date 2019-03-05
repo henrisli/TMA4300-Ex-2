@@ -1,4 +1,4 @@
-﻿--- 
+--- 
 title: 'TMA4300 Computer Intensive Statistical Methods Exercise 2, Spring 2019'
 output:
   pdf_document:
@@ -243,7 +243,7 @@ times = vector(mode = "double", length = N_iter)
 #Set start values
 kappau_start = alpha_u / beta_u
 kappav_start = alpha_v / beta_v
-u_start = rep(1, length(Oral$SMR))
+u_start = rep(0, length(Oral$SMR))
 eta_start = log(Oral$SMR)
 
 u[1,] = u_start
@@ -334,8 +334,8 @@ acf(kappav, lag.max = 1000)
 ```
 The plot shows that the samples of $\kappa_v$ are highly correlated.
 
-
-```{r}
+We then draw three random components of $\mathbf{u}$ and $\boldsymbol \eta$ and plot trace plots, autocorrelation functions and use the function `geweke.diag()` to check for convergence.
+```{r, echo = T, eval = T, out.width = "50%"}
 random_indexes = sort(sample(1:length(Oral$Y), 3, replace=F))
 df4 = data.frame()
 for (i in 1:3){
@@ -345,16 +345,21 @@ for (i in 1:3){
 }
 ggplot(df4, aes(x = N, y = u, shape = shape, col=col)) + geom_point() + scale_shape(solid=F) + guides(shape = F)
 ```
+The trace plot for three components of $\mathbf{u}$ looks correct. 
 
-```{r}
-df5 = data.frame(u = u[,random_indexes])
-head(df5)
-acf(df5, lag.max = 200)
+```{r, echo = T, eval = T, out.width = "33%"}
+#df5 = data.frame(u = u[,random_indexes])
+#acf(df5, lag.max = 200)
+
+acf(u[,random_indexes[1]], lag.max = 200)
+acf(u[,random_indexes[2]], lag.max = 200)
+acf(u[,random_indexes[3]], lag.max = 200)
 ```
+The three components of $\mathbf{u}$ show varying degree of autocorrelation, but generally, all three components are highly autocorrelated.
 
 
-```{r}
-random_indexes = sort(sample(1:length(Oral$Y), 3, replace=F))
+```{r, echo = T, eval = T, out.width = "50%"}
+#random_indexes = sort(sample(1:length(Oral$Y), 3, replace=F))
 df4 = data.frame()
 for (i in 1:3){
   index = random_indexes[i]
@@ -364,10 +369,14 @@ for (i in 1:3){
 ggplot(df4, aes(x = N, y = eta, shape = shape, col=col)) + geom_point() + scale_shape(solid=F)+ guides(shape = F)
 ```
 
-```{r}
-df7 = data.frame(eta = eta[,random_indexes])
-head(df7)
-acf(df7, lag.max = 200)
+```{r, echo = T, eval = T, out.width = "33%"}
+#df7 = data.frame(eta = eta[,random_indexes])
+#head(df7)
+#acf(df7, lag.max = 200)
+
+acf(eta[,random_indexes[1]], lag.max = 200)
+acf(eta[,random_indexes[2]], lag.max = 200)
+acf(eta[,random_indexes[3]], lag.max = 200)
 ```
 
 ```{r}
@@ -375,6 +384,7 @@ library(coda)
 geweke.diag(eta)
 ```
 
+# Exercise 5 (Interpretation of results)
 
 ```{r}
 post_mean_eta = apply(eta[1000:10000,], 2, mean)
