@@ -334,16 +334,32 @@ for (i in 1:length(random_indexes)){
 }
 ggplot(df4, aes(x = N, y = u, shape = shape, col=col)) + geom_point() + scale_shape(solid=F)
 ```
+
+```{r}
+df5 = data.frame(u = u[,random_indexes])
+head(df5)
+acf(df5)
+```
+
+
 ```{r}
 random_indexes = sample(1:length(Oral$Y), 3, replace=F)
-df4 = data.frame()
+cat("indexes: ", random_indexes)
+df6 = data.frame()
 for (i in 1:length(random_indexes)){
   index = random_indexes[i]
   df = data.frame(eta = eta[, index], N = 1:N_iter, shape = as.factor(i), col=as.factor(i))
-  df4 = rbind(df4, df)
+  df6 = rbind(df6, df)
 }
-ggplot(df4, aes(x = N, y = eta, shape = shape, col=col)) + geom_point() + scale_shape(solid=F)
+ggplot(df6, aes(x = N, y = eta, shape = shape, col=col)) + geom_point() + scale_shape(solid=F)
 ```
+
+```{r}
+df7 = data.frame(eta = eta[,random_indexes])
+head(df7)
+acf(df7)
+```
+
 
 
 ```{r}
