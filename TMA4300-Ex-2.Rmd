@@ -1,4 +1,4 @@
-﻿--- 
+--- 
 title: 'TMA4300 Computer Intensive Statistical Methods Exercise 2, Spring 2019'
 output:
   pdf_document:
@@ -302,7 +302,7 @@ for (i in 2:N_iter) {
   times[i] = as.numeric(Sys.time()) - t0 
 }
 ```
-We note that the code takes `r sum(times)` seconds, or `r sum(times)/60` minutes.
+We note that the code takes `r round(sum(times))` seconds, or `r round(sum(times)/60,1)` minutes.
 
 # Exercise 3 (Convergence diagnostics)
 
@@ -318,7 +318,7 @@ ggplot(df12, aes(x = N, y = kappa_u)) + geom_point()
 From the second plot, we suspect that the burn-in period might be somewhat over 500 iterations.
 
 We then display an autocorrelation plot for $\kappa_u$.
-```{r, echo = T, eval = T, out.width = "50%"}
+```{r, echo = T, eval = T, out.width = "50%", fig.align = "center"}
 acf(kappau, lag.max = 60)
 ```
 From the plot, we see that we need to use only every $\sim 45$^th^ iteration to get a correlation which is not statistically significant.
@@ -350,7 +350,7 @@ The plot shows that the samples of $\kappa_v$ are highly correlated.
 
 
 SKRIV OM GEWEKE
-```{r, echo = T, eval = T, out.width = "50%"}
+```{r, echo = T, eval = T}
 gw = geweke.diag(kappav)
 cat("zscores:", gw$z, "\n")
 cat("pvals:", 2*(1-pnorm(abs(gw$z))))
@@ -358,7 +358,7 @@ cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 
 
 We then draw three random components of $\mathbf{u}$ and $\boldsymbol \eta$ and plot trace plots, autocorrelation functions and use the function `geweke.diag()` to check for convergence.
-```{r, echo = T, eval = T, out.width = "50%"}
+```{r, echo = T, eval = T, out.width = "50%", fig.align = "center"}
 random_indexes = sort(sample(1:length(Oral$Y), 3, replace=F))
 df4 = data.frame()
 for (i in 1:3){
@@ -389,7 +389,7 @@ cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
 
 
-```{r, echo = T, eval = T, out.width = "50%"}
+```{r, echo = T, eval = T, out.width = "50%", fig.align = "center"}
 #random_indexes = sort(sample(1:length(Oral$Y), 3, replace=F))
 df4 = data.frame()
 for (i in 1:3){
@@ -442,7 +442,7 @@ cat(ESS_kappav / running_time)
 # Exercise 5 (Interpretation of results)
 
 
-```{r, echo = T, eval = T}
+```{r, echo = T, eval = T, out.width = "50%"}
 post_mean_eta = apply(eta[1000:10000,], 2, mean)
 #post_mean_eta = apply(exp(eta[1000:10000,]), 2, mean)
 
