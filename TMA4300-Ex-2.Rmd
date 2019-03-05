@@ -1,4 +1,4 @@
-﻿--- 
+--- 
 title: 'TMA4300 Computer Intensive Statistical Methods Exercise 2, Spring 2019'
 output:
   pdf_document:
@@ -418,19 +418,42 @@ cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 
 # Exercise 4 (Effective sample size)
 
+```{r}
+library(coda)
+ESS_kappau = effectiveSize(kappau)
+ESS_kappav = effectiveSize(kappav)
+```
+```{r}
+running_time = sum(times)
+
+cat("kappau \n")
+cat(running_time, "\n")
+cat(ESS_kappau / running_time, "\n")
+
+cat("kappav \n")
+cat(running_time, "\n")
+cat(ESS_kappav / running_time)
+```
+
+
 # Exercise 5 (Interpretation of results)
 
 
 ```{r}
-post_mean_eta = apply(eta[1000:10000,], 2, mean)
+post_mean_eta = apply(exp(eta[1000:10000,]), 2, mean)
 post_median_eta = apply(exp(eta[1000:10000,]), 2, median)
 
-post_mean_u = apply(u[1000:10000,], 2, mean)
+post_mean_u = apply(exp(u[1000:10000,]), 2, mean)
 post_median_u = apply(exp(u[1000:10000,]), 2, median)
 
 #germany.plot(post_mean_eta, col=col, legend=TRUE)
 germany.plot(post_median_u, col=col, legend=TRUE)
-germany.plot(post_median_eta, col=col, legend=TRUE)
 ```
 
+# Exercise 6 (Comparison of INLA and inclusion of covariate information)
+
+```{r}
+g = system.file("demodata/germany.graph", package="INLA")
+
+```
 
