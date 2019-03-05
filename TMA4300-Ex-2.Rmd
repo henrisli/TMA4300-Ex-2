@@ -164,15 +164,14 @@ We observe that $q(\boldsymbol{\eta} \lvert \cdot)$ is a normal density written 
 
 #Exercise 2
 
-We implement a Gibbs sampling algorithm with individual parameters updates using the full conditional for $\kappa_u$, $\kappa_v$ and $\mathbf{u}$. We update $\boldsymbol{\eta}$ using Metropolis-Hastings with $q(\boldsymbol{\eta} \lvert 
-\mathbf{z}, \cdot)$ as the proposal density. We set $\mathbf{z} = \boldsymbol{\eta}^{(m-1)}$
+We implement a Gibbs sampling algorithm with individual parameter updates using the full conditional for $\kappa_u$, $\kappa_v$ and $\mathbf{u}$. We update $\boldsymbol{\eta}$ using Metropolis-Hastings with $q(\boldsymbol{\eta} \lvert \mathbf{z}, \cdot)$ as the proposal density. We set $\mathbf{z} = \boldsymbol{\eta}^{(m-1)}$.
 
-```{r}
+```{r, echo = T, eval = T}
 head(Oral)
 ```
 
 
-```{r}
+```{r, echo = T, eval = T}
 # Setup
 
 load("tma4300_ex2_Rmatrix.Rdata")
@@ -184,7 +183,7 @@ beta_v = 0.01
 ```
 
 
-```{r}
+```{r, echo = T, eval = T}
 sample_u = function(kappa_v, kappa_u, eta){
   #Samples from the canonical normal
   b = kappa_v * eta
@@ -244,7 +243,7 @@ times = vector(mode = "double", length = N_iter)
 #Set start values
 kappau_start = alpha_u / beta_u
 kappav_start = alpha_v / beta_v
-u_start = seq(from=1, to=1, length.out = length(Oral$SMR))
+u_start = rep(1, length(Oral$SMR))
 eta_start = log(Oral$SMR)
 
 u[1,] = u_start
@@ -263,7 +262,7 @@ for (i in 2:N_iter) {
   #Sample kappav
   kappav[i] = rgamma(1, n/2 + alpha_v, beta_v + 1/2 * t(eta[i-1,] - u[i-1,])%*%(eta[i-1,] - u[i-1,]))
   
-  #Sample v
+  #Sample u
   #cat(kappav[i], kappau[i], eta[i-1,])
   res = sample_u(kappav[i], kappau[i], eta[i-1,])
   u[i, ] = res
@@ -295,7 +294,6 @@ for (i in 2:N_iter) {
     eta[i,] = eta[i-1,]
   }
   times[i] = as.numeric(Sys.time()) - t0 
-  t0 = as.numeric(Sys.time())
 }
 ```
 
