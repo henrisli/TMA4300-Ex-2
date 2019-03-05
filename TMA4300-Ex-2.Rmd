@@ -23,7 +23,7 @@ opts_chunk$set(tidy.opts = list(width.cutoff = 68), tidy = TRUE, warning = FALSE
 ```
 
 
-```{r, echo = F, eval = T}
+```{r, echo = F, eval = T, fig.align = "center", out.width = "80%"}
 library(spam)         # load the data
 attach(Oral)          # allow direct referencing to Y and E# load some libraries to generate nice map plots
 library(fields, warn.conflict=FALSE)
@@ -309,7 +309,13 @@ We note that the code takes `r round(sum(times))` seconds, or `r round(sum(times
 We now check a few diagnostic summaries for the precision parameters $\kappa_u$ and $\kappa_v$. We also do the same for three randomly chosen components of $\mathbf{u}$ and $\mathbf{v}$.
 
 First, we show a trace plot of $\kappa_u$. The values in the burn-in period are really large, so we display both a plot of the whole chain, and a plot where the first 500 values are removed.
-```{r, echo = T, eval = T, out.width = "50%"}
+```{r, echo = T, eval = F, out.width = "50%"}
+df1 = data.frame(kappa_u = kappau, N = 1:N_iter)
+ggplot(df1, aes(x = N, y = kappa_u)) + geom_point()
+df12 = data.frame(kappa_u = kappau[500:N_iter], N = 500:N_iter)
+ggplot(df12, aes(x = N, y = kappa_u)) + geom_point()
+```
+```{r, echo = F, eval = T, out.width = "50%"}
 df1 = data.frame(kappa_u = kappau, N = 1:N_iter)
 ggplot(df1, aes(x = N, y = kappa_u)) + geom_point()
 df12 = data.frame(kappa_u = kappau[500:N_iter], N = 500:N_iter)
@@ -333,7 +339,13 @@ cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 
 
 We then move on to $\kappa_v$, and display both a plot of the whole chain, and a plot where the first 500 values are removed.
-```{r, echo = T, eval = T, out.width = "50%"}
+```{r, echo = T, eval = F, out.width = "50%"}
+df2 = data.frame(kappa_v = kappav, N = 1:N_iter)
+ggplot(df2, aes(x = N, y = kappa_v)) + geom_point()
+df21 = data.frame(kappa_v = kappav[500:N_iter], N = 500:N_iter)
+ggplot(df21, aes(x = N, y = kappa_v)) + geom_point()
+```
+```{r, echo = F, eval = T, out.width = "50%"}
 df2 = data.frame(kappa_v = kappav, N = 1:N_iter)
 ggplot(df2, aes(x = N, y = kappa_v)) + geom_point()
 df21 = data.frame(kappa_v = kappav[500:N_iter], N = 500:N_iter)
@@ -342,7 +354,12 @@ ggplot(df21, aes(x = N, y = kappa_v)) + geom_point()
 Also here, we suspect that the burn-in period might be somewhat over 500 iterations.
 
 We then display an autocorrelation plot for $\kappa_v$.
-```{r, echo = T, eval = T, out.width = "50%"}
+```{r, echo = T, eval = F, out.width = "50%"}
+acf(kappav)
+acf(kappav, lag.max = 1000)
+```
+
+```{r, echo = F, eval = T, out.width = "50%"}
 acf(kappav)
 acf(kappav, lag.max = 1000)
 ```
@@ -371,10 +388,15 @@ ggplot(df4, aes(x = N, y = u, shape = shape, col=col)) + geom_point() + scale_sh
 The trace plot for three components of $\mathbf{u}$ looks correct. 
 
 
-```{r, echo = T, eval = T, out.width = "33%"}
+```{r, echo = T, eval = F, out.width = "33%"}
 df5 = data.frame(u = u[,random_indexes])
-#acf(df5, lag.max = 200)
+acf(u[,random_indexes[1]], lag.max = 200)
+acf(u[,random_indexes[2]], lag.max = 200)
+acf(u[,random_indexes[3]], lag.max = 200)
+```
 
+```{r, echo = F, eval = T, out.width = "33%"}
+df5 = data.frame(u = u[,random_indexes])
 acf(u[,random_indexes[1]], lag.max = 200)
 acf(u[,random_indexes[2]], lag.max = 200)
 acf(u[,random_indexes[3]], lag.max = 200)
@@ -400,11 +422,17 @@ for (i in 1:3){
 ggplot(df4, aes(x = N, y = eta, shape = shape, col=col)) + geom_point() + scale_shape(solid=F)+ guides(shape = F)
 ```
 
-```{r, echo = T, eval = T, out.width = "33%"}
+```{r, echo = T, eval = F}
 df7 = data.frame(eta = eta[,random_indexes])
 #head(df7)
 #acf(df7, lag.max = 200)
 
+acf(eta[,random_indexes[1]], lag.max = 200)
+acf(eta[,random_indexes[2]], lag.max = 200)
+acf(eta[,random_indexes[3]], lag.max = 200)
+```
+```{r, echo = F, eval = T, out.width = "33%"}
+df7 = data.frame(eta = eta[,random_indexes])
 acf(eta[,random_indexes[1]], lag.max = 200)
 acf(eta[,random_indexes[2]], lag.max = 200)
 acf(eta[,random_indexes[3]], lag.max = 200)
