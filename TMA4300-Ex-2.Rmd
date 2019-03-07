@@ -1,4 +1,4 @@
---- 
+﻿--- 
 title: 'TMA4300 Computer Intensive Statistical Methods Exercise 2, Spring 2019'
 output:
   pdf_document:
@@ -309,6 +309,7 @@ ggplot(df1, aes(x = N, y = kappa_u)) + geom_point()
 df12 = data.frame(kappa_u = kappau[500:N_iter], N = 500:N_iter)
 ggplot(df12, aes(x = N, y = kappa_u)) + geom_point()
 ```
+
 ```{r, echo = F, eval = T, out.width = "50%"}
 df1 = data.frame(kappa_u = kappau, N = 1:N_iter)
 ggplot(df1, aes(x = N, y = kappa_u)) + geom_point()
@@ -551,15 +552,15 @@ res$summary.random$region
 res2 = inla.hyperpar(res)
 
 germany.plot(exp(res$summary.random$region$mean), col=col, legend=TRUE)
-germany.plot(post_median_eta, col=col, legend=TRUE)
+germany.plot(post_median_u, col=col, legend=TRUE)
 
 
-germany.plot( exp(res$summary.random$region$mean) - post_median_eta, col=col, legend=TRUE)
+germany.plot( exp(res$summary.random$region$mean) - post_median_u, col=col, legend=TRUE)
 ```
 
 ```{r, echo=True, eval=True}
 exp(res$summary.random$region$mean[random_indexes])
-post_median_eta[random_indexes]
+post_median_u[random_indexes]
 ```
 
 ```{r, echo=True, eval=True}
