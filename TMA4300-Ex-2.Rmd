@@ -220,8 +220,6 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
   b_canonical = kappa_v * u + b_taylor
   A_canonical = kappa_v * diag.spam(n) + diag.spam(c_taylor)
   
-  #SKRIVE INN DMVNORM HER
-  #res = eta %*% b_canonical - 1/2 * t(eta) %*% A_canonical %*% eta
   res = dmvnorm.canonical(eta, b_canonical, A_canonical)
   
   if (log){
@@ -460,7 +458,7 @@ gw = geweke.diag(df7)
 cat("zscores:", gw$z, "\n")
 cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
-$p$-values of `r cat(round(2*(1-pnorm(abs(gw$z))),2))` indicate that the chain converges during the first $10\%$ iterations for only component 7, and not for component 257 and 424.
+$p$-values of `r cat(round(2*(1-pnorm(abs(gw$z))),2))` indicate that the chain converges during the first $10\%$ iterations for only component 7, and not for component 257 and 424. ENDRE ALLE DISSE BASERT PÅ NYE ITERASJONER!!!!!!!!!!!!!!!
 
 SI NOE OM BURN-IN HER OGSÅ. All in all, we have seen that most of the variables in our Markov chain converge during the first $10\%$ iterations. Still, most of the samples are highly autocorrelated, which is a critical flaw. High autocorrelation decreases performance of the MCMC algorithm, implying that we have to run several iterations of the algorithm to produce the equivalent of an independent sample. Despite this weakness, the chain has in fact converged, and we believe it can be used.
 
