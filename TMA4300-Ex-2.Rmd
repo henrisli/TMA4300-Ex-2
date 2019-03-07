@@ -232,7 +232,7 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
 }
 
 #Set number of iterations
-N_iter = 30000
+N_iter = 2000
 
 #Allocate vectors and arrays 
 u = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
@@ -417,7 +417,7 @@ gw = geweke.diag(df5)
 cat("zscores:", gw$z, "\n")
 cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
-$p$-values of `r cat(round(2*(1-pnorm(abs(gw$z))),2))` indicate that the chain converges during the first $10\%$ iterations for only component 7 and 424, and not for component 257.
+$p$-values of `r cat(round(2*(1-pnorm(abs(gw$z))),2))` indicate that the chain did converge during the first $10\%$ iterations only for component 7 and 424, and not for component 257.
 
 
 ```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:3eta}Trace plot for three random components of eta"}
@@ -459,7 +459,6 @@ cat("zscores:", gw$z, "\n")
 cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
 $p$-values of `r cat(round(2*(1-pnorm(abs(gw$z))),2))` indicate that the chain converges during the first $10\%$ iterations for only component 7, and not for component 257 and 424.
-
 
 SOME CONCLUDING REMARKS TO SUM IT ALL UP
 
@@ -503,13 +502,13 @@ This means that the MCMC algorithm produces the equivalent of `r effectiveSize(k
 Finally, we plot the posterior median of $\exp(\mathbf{u})$ for all regions using the function `germany.plot()`. 
 
 ```{r, echo = T, eval = F, out.width = "50%", fig.align = "center"}
-post_median_u = apply(exp(u[1000:10000,]), 2, median)
+post_median_u = apply(exp(u[1000:dim(u)[1],]), 2, median)
 
 germany.plot(post_median_u, col=col, legend=TRUE)
 ```
 
 ```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:medianexpu} Posterior median of exp(u) for all regions in Germany"}
-post_median_u = apply(exp(u[1000:10000,]), 2, median)
+post_median_u = apply(exp(u[1000:dim(u)[1],]), 2, median)
 
 germany.plot(post_median_u, col=col, legend=TRUE, main = "Median exp(u)")
 ```
@@ -541,44 +540,45 @@ kappauprior = list(prior="loggamma", param=c(alpha_u, beta_u))
 kappavprior = list(prior="loggamma", param=c(alpha_v, beta_v))
 
 # eta = u(region) + v(region)
-# WHY DO WE NEED CONSTR = F HERE
-#formula <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=F) + 
-#            f(region2, model="iid", hyper=list(prec=kappavprior))
-
-formula <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior)) + 
+formula_1 <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=F) + 
             f(region2, model="iid", hyper=list(prec=kappavprior))
 
+formula_0 <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior)) + 
+            f(region2, model="iid", hyper=list(prec=kappavprior))
 
 # Oral$Y = Oral$E * eta
-res <- inla(formula,family="poisson", E = dfinla$E, data=dfinla)
-
-# Look at results
-res$summary.random$region
-
-res2 = inla.hyperpar(res)
-
-germany.plot(exp(res$summary.random$region$mean), col=col, legend=TRUE)
-germany.plot(post_median_u, col=col, legend=TRUE)
-
-
-germany.plot( exp(res$summary.random$region$mean) - post_median_u, col=col, legend=TRUE)
+result_1 <- inla(formula_1, family="poisson", E = dfinla$E, data=dfinla)
+result_0 <- inla(formula_0, family="poisson", E = dfinla$E, data=dfinla)
 ```
 
+```{r}
+result = result_0
+result_improved = inla.hyperpar(result)
+```
+
+
+```{r}
+germany.plot(exp(result$summary.random$region$mean) - post_median_u, col=col, legend=TRUE)
+```
+
+
 ```{r, echo=True, eval=True}
-exp(res$summary.random$region$mean[random_indexes])
+exp(result$summary.random$region$mean[random_indexes])
 post_median_u[random_indexes]
 ```
 
 ```{r, echo=True, eval=True}
-df60 = data.frame(res2$marginals.hyperpar$`Precision for region`)
+df60 = data.frame(result$marginals.hyperpar$`Precision for region`)
 df61 = data.frame(x = kappau[1000:length(kappau)])
+df62 = data.frame(result_improved$marginals.hyperpar$`Precision for region`)
 
-ggplot() + geom_histogram(data=df61, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df60, aes(x = x, y = y, col="INLA")) + xlim(0, 40)
+ggplot() + geom_histogram(data=df61, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df60, aes(x = x, y = y, col="INLA")) + geom_line(data=df62, aes(x = x, y = y, col="INLA - improved")) + xlim(6, 34)
 ```
 
 ```{r, echo=True, eval=True}
-df60 = data.frame(res2$marginals.hyperpar$`Precision for region2`)
-df61 = data.frame(x = kappav[1000:length(kappav)])
+df62 = data.frame(result$marginals.hyperpar$`Precision for region2`)
+df63 = data.frame(x = kappav[1000:length(kappav)])
+df64 = data.frame(result_improved$marginals.hyperpar$`Precision for region2`)
 
-ggplot() + geom_histogram(data=df61, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df60, aes(x = x, y = y, col="INLA")) + xlim(0, 500)
+ggplot() + geom_histogram(data=df63, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df62, aes(x = x, y = y, col="INLA")) + geom_line(data=df64, aes(x = x, y = y, col="INLA - improved")) + xlim(40, 500)
 ```
