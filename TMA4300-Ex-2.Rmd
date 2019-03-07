@@ -459,7 +459,7 @@ cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
 $p$-values of `r cat(round(2*(1-pnorm(abs(gw$z))),2))` indicate that the chain converges during the first $10\%$ iterations for only component 7, and not for component 257 and 424.
 
-All in all, we have seen that most of the variables in our Markov chain converge during the first $10\%$ iterations. Still, most of the samples are highly autocorrelated, which is a critical flaw. High autocorrelation decreases performance of the MCMC algorithm, implying that we have to run several iterations of the algorithm to produce the equivalent of an independent sample. Despite this weakness, the chain has in fact converged, and we believe it can be used.
+SI NOE OM BURN-IN HER OGSÅ. All in all, we have seen that most of the variables in our Markov chain converge during the first $10\%$ iterations. Still, most of the samples are highly autocorrelated, which is a critical flaw. High autocorrelation decreases performance of the MCMC algorithm, implying that we have to run several iterations of the algorithm to produce the equivalent of an independent sample. Despite this weakness, the chain has in fact converged, and we believe it can be used.
 
 # Exercise 4 (Effective sample size)
 To assess the quality of the samples from our Markov chain, we calculate the effective sample size for the precision parameters $\kappa_u$ and $\kappa_v$ by using the function `effectiveSize()` from the `coda` library.
@@ -469,8 +469,6 @@ running_time = sum(times)
 cat("ESS of kappa u: ", effectiveSize(kappau), "\n")
 cat("ESS of kappa_v: ", effectiveSize(kappav))
 ```
-
-
 ```{r, echo = F, eval = T}
 cat("ESS of kappa u: ", effectiveSize(kappau), "\n")
 cat("ESS of kappa_v: ", effectiveSize(kappav))
