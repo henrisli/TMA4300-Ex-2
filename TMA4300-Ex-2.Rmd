@@ -499,7 +499,7 @@ This means that the MCMC algorithm produces the equivalent of `r effectiveSize(k
 # Exercise 5 (Interpretation of results)
 Finally, we plot the posterior median of $\exp(\mathbf{u})$ for all regions using the function `germany.plot()`. 
 
-```{r, echo = T, eval = F, out.width = "50%"}
+```{r, echo = T, eval = F, out.width = "50%", fig.align = "center"}
 post_median_u = apply(exp(u[1000:10000,]), 2, median)
 
 germany.plot(post_median_u, col=col, legend=TRUE)
