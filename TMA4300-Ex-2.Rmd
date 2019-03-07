@@ -449,6 +449,9 @@ acf(eta[,random_indexes[1]], lag.max = 200)
 acf(eta[,random_indexes[2]], lag.max = 200)
 acf(eta[,random_indexes[3]], lag.max = 200)
 ```
+
+Same as for the components of $\mathbf{u}$, the three components of $\boldsymbol \eta$ show varying degree of autocorrelation, but generally, all three components are highly autocorrelated.
+
 Same as for the components of $\mathbf{u}$, the three components of $\boldsymbol \eta$ show varying degree of autocorrelation, with some being highly correlated and others almost uncorrelated (SKRIV OM BASERT PÅ NY SAMPLE).
 
 Finally, the Geweke Diagnostic for the three components of $\boldsymbol \eta$ shows the following.
@@ -461,14 +464,16 @@ $p$-values of x indicates that the chain converges during the first $10\%$ itera
 
 SOME CONCLUDING REMARKS TO SUM IT ALL UP
 
-
 # Exercise 4 (Effective sample size)
 To assess the quality of the samples from our Markov chain, we calculate the effective sample size for the precision parameters $\kappa_u$ and $\kappa_v$ by using the function `effectiveSize()` from the `coda` library.
 
 ```{r, echo = T, eval = F}
+running_time = sum(times)
 cat("ESS of kappa u: ", effectiveSize(kappau), "\n")
 cat("ESS of kappa_v: ", effectiveSize(kappav))
 ```
+
+
 ```{r, echo = F, eval = T}
 cat("ESS of kappa u: ", effectiveSize(kappau), "\n")
 cat("ESS of kappa_v: ", effectiveSize(kappav))
@@ -476,8 +481,6 @@ cat("ESS of kappa_v: ", effectiveSize(kappav))
 The ESS is the estimated number of independent samples needed to obtain a parameter estimate with the same precision as the MCMC estimate based on $N$ dependent samples. In our case, $N=10000$, which means that the quality of our $\kappa_u$ sample is as good as `r round(effectiveSize(kappau))` independent samples. Also, our $\kappa_v$ sample is as good as `r round(effectiveSize(kappav))` independent samples. The $\kappa_u$ samples are better than the $\kappa_v$ samples, which also could be seen by the fact that the $\kappa_u$ samples are much less correlated than the $\kappa_v$ samples.
 
 How could the MCMC sampler be changed to possibly improve the ESS values??!?!?!?!?!
-
-
 
 We also compute the relative ESS, which is the ESS divided by the running time of the MCMC algorithm. The relative ESS can be interpreted as a measure for the number of independent samples produced by the algorithm per second. We get the following values for the relative ESS of $\kappa_u$ and $\kappa_v$.
 ```{r, echo = T, eval = F}
@@ -515,6 +518,26 @@ We see from figure \ref{fig:medianexpu} that we have some spatial structure on t
 
 ```{r}
 g = system.file("demodata/germany.graph", package="INLA")
-
+library(INLA)
 ```
+
+```{r}
+head(Oral)
+```
+
+
+```{r}
+formula <- Y~f(region,model="besag", graph = g,
+                    hyper=list(prec=list(prior="loggamma", param=c(alpha_u,beta_u))))
+
+# Fit a Bayesian model using the inla() function
+res <- inla(formula,family="poisson", E = Oral$E, data=Oral)
+
+# Look at results
+summary(res)
+# Look at the estimated marginal posterior distributions
+plot(res$marginals.fixed$`(Intercept)`)
+hist(kappau)
+```
+
 
