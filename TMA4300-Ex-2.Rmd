@@ -167,7 +167,7 @@ We observe that $q(\boldsymbol{\eta} \lvert \cdot)$ is a normal density written 
 
 # Exercise 2 (Implementation of the MCMC sampler)
 
-We implement a Gibbs sampling algorithm with individual parameter updates using the full conditional for $\kappa_u$, $\kappa_v$ and $\mathbf{u}$. We update $\boldsymbol{\eta}$ using Metropolis-Hastings with $q(\boldsymbol{\eta} \lvert \mathbf{z}, \cdot)$ as the proposal density. We set $\mathbf{z} = \boldsymbol{\eta}^{(m-1)}$, and do $N = 10000$ iterations.
+We implement a Gibbs sampling algorithm with individual parameter updates using the full conditional for $\kappa_u$, $\kappa_v$ and $\mathbf{u}$. We update $\boldsymbol{\eta}$ using Metropolis-Hastings with $q(\boldsymbol{\eta} \lvert \mathbf{z}, \cdot)$ as the proposal density. We set $\mathbf{z} = \boldsymbol{\eta}^{(m-1)}$, and do $N = 50000$ iterations.
 
 
 ```{r, echo = T, eval = T}
@@ -322,7 +322,7 @@ We then display an autocorrelation plot for $\kappa_u$.
 ```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:acfku}Autocorrelation plot for kappa u"}
 acf(kappau, lag.max = 60)
 ```
-From the plot, we see that we can use only every $\sim 45$^th^ iteration to get a correlation which is not statistically significant. Taking into account the burn-in period, we would then only get about 200 uncorrelated samples from our Markov chain of size $N=10000$.
+From the plot, we see that we can use only every $\sim 45$^th^ iteration to get a correlation which is not statistically significant. Taking into account the burn-in period, we would then only get about 200 uncorrelated samples from our Markov chain of size $N=50000$.
 
 To conclude our diagnosis of the chain for $\kappa_u$, we check the chain for convergence by using the function `geweke.diag()` from the R package `coda`. The function provides a $z$-value, which we use to compute a corresponding $p$-value. Large $p$-values indicates that the chain has converged during the first $10\%$ iterations.
 ```{r, echo = T, eval = F}
@@ -460,10 +460,7 @@ cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
 $p$-values of `r cat(round(2*(1-pnorm(abs(gw$z))),2))` indicate that the chain converges during the first $10\%$ iterations for only component 7, and not for component 257 and 424.
 
-SOME CONCLUDING REMARKS TO SUM IT ALL UP
-
-All in all, we have seen that most of the variables in our Markov chain converge during the first $10\%$ iterations. Still, most of the samples are highly autocorrelated, which is a critical flaw. High autocorrelation decreases performance of the MCMC algorithm, implying that we have to run several iterations of the algorithm to produce the equivalent of an independent sample. Despite this weakness, the chain has in fact converged, and we believe it can be used.
-
+SI NOE OM BURN-IN HER OGSÅ. All in all, we have seen that most of the variables in our Markov chain converge during the first $10\%$ iterations. Still, most of the samples are highly autocorrelated, which is a critical flaw. High autocorrelation decreases performance of the MCMC algorithm, implying that we have to run several iterations of the algorithm to produce the equivalent of an independent sample. Despite this weakness, the chain has in fact converged, and we believe it can be used.
 
 # Exercise 4 (Effective sample size)
 To assess the quality of the samples from our Markov chain, we calculate the effective sample size for the precision parameters $\kappa_u$ and $\kappa_v$ by using the function `effectiveSize()` from the `coda` library.
@@ -473,13 +470,11 @@ running_time = sum(times)
 cat("ESS of kappa u: ", effectiveSize(kappau), "\n")
 cat("ESS of kappa_v: ", effectiveSize(kappav))
 ```
-
-
 ```{r, echo = F, eval = T}
 cat("ESS of kappa u: ", effectiveSize(kappau), "\n")
 cat("ESS of kappa_v: ", effectiveSize(kappav))
 ```
-The ESS is the estimated number of independent samples needed to obtain a parameter estimate with the same precision as the MCMC estimate based on $N$ dependent samples. In our case, $N=10000$, which means that the quality of our $\kappa_u$ sample is as good as `r round(effectiveSize(kappau))` independent samples. Also, our $\kappa_v$ sample is as good as `r round(effectiveSize(kappav))` independent samples. The $\kappa_u$ samples are better than the $\kappa_v$ samples, which also could be seen by the fact that the $\kappa_u$ samples are much less correlated than the $\kappa_v$ samples.
+The ESS is the estimated number of independent samples needed to obtain a parameter estimate with the same precision as the MCMC estimate based on $N$ dependent samples. In our case, $N=50000$, which means that the quality of our $\kappa_u$ sample is as good as `r round(effectiveSize(kappau))` independent samples. Also, our $\kappa_v$ sample is as good as `r round(effectiveSize(kappav))` independent samples. The $\kappa_u$ samples are better than the $\kappa_v$ samples, which also could be seen by the fact that the $\kappa_u$ samples are much less correlated than the $\kappa_v$ samples.
 
 How could the MCMC sampler be changed to possibly improve the ESS values??!?!?!?!?!
 
@@ -502,13 +497,13 @@ This means that the MCMC algorithm produces the equivalent of `r effectiveSize(k
 Finally, we plot the posterior median of $\exp(\mathbf{u})$ for all regions using the function `germany.plot()`. 
 
 ```{r, echo = T, eval = F, out.width = "50%", fig.align = "center"}
-post_median_u = apply(exp(u[1000:dim(u)[1],]), 2, median)
+post_median_u = apply(exp(u[100:N_iter,]), 2, median)
 
 germany.plot(post_median_u, col=col, legend=TRUE)
 ```
 
 ```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:medianexpu} Posterior median of exp(u) for all regions in Germany"}
-post_median_u = apply(exp(u[1000:dim(u)[1],]), 2, median)
+post_median_u = apply(exp(u[100:N_iter,]), 2, median)
 
 germany.plot(post_median_u, col=col, legend=TRUE, main = "Median exp(u)")
 ```
@@ -518,12 +513,13 @@ We see from figure \ref{fig:medianexpu} that we have some spatial structure on t
 
 # Exercise 6 (Comparison of INLA and inclusion of covariate information)
 
-```{r, echo=True, eval=True}
+```{r, echo=T, eval=T}
 g = system.file("demodata/germany.graph", package="INLA")
 library(INLA)
 ```
 
-```{r, echo=True, eval=True}
+```{r, echo=T, eval=T}
+
 # Create a copy of the dataframe Oral
 dfinla = data.frame(Oral)
 
@@ -532,7 +528,7 @@ dfinla$region2 = region
 ```
 
 
-```{r, echo=True, eval=True}
+```{r, echo=T, eval=T}
 
 # Create kappau prior
 kappauprior = list(prior="loggamma", param=c(alpha_u, beta_u))
@@ -561,7 +557,6 @@ result_improved = inla.hyperpar(result)
 germany.plot(exp(result$summary.random$region$mean) - post_median_u, col=col, legend=TRUE)
 ```
 
-
 ```{r, echo=True, eval=True}
 exp(result$summary.random$region$mean[random_indexes])
 post_median_u[random_indexes]
@@ -574,6 +569,7 @@ df62 = data.frame(result_improved$marginals.hyperpar$`Precision for region`)
 
 ggplot() + geom_histogram(data=df61, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df60, aes(x = x, y = y, col="INLA")) + geom_line(data=df62, aes(x = x, y = y, col="INLA - improved")) + xlim(6, 34)
 ```
+
 
 ```{r, echo=True, eval=True}
 df62 = data.frame(result$marginals.hyperpar$`Precision for region2`)
