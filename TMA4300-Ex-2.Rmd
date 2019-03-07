@@ -524,7 +524,7 @@ library(INLA)
 dfinla = data.frame(Oral)
 
 # Copy the column region
-dfinla$region2 = region
+dfinla$region2 = dfinla$region
 ```
 
 
