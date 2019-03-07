@@ -40,7 +40,6 @@ For $\mathbf{u}$, we assume that neighboring districts are more similar than dis
 
 $$p(\mathbf{u} \lvert \kappa_u) \propto \kappa_u^{(n-1)/2}\exp \bigg (  \frac{-\kappa_u}{2}\sum_{i\sim j}{(u_i - u_j)^2}  \bigg)$$
 ```{r, echo = F, eval = T, fig.align = "center", out.width = "80%", fig.cap = "\\label{fig:smr} Standardised mortality rates (SMR)"}
-set.seed(123)
 library(spam)         # load the data
 attach(Oral)          # allow direct referencing to Y and E# load some libraries to generate nice map plots
 
@@ -183,6 +182,7 @@ beta_v = 0.01
 
 
 ```{r, echo = T, eval = T}
+set.seed(123)
 source("dmvnorm.R")
 
 sample_u = function(kappa_v, kappa_u, eta){
@@ -381,6 +381,7 @@ A $p$-value of `r round(2*(1-pnorm(abs(gw$z))),2)` indicates that the chain conv
 
 We then draw three random components of $\mathbf{u}$ and $\boldsymbol \eta$ and plot trace plots, autocorrelation functions and use the function `geweke.diag()` to check for convergence.
 ```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:3u}Trace plot for three random components of u"}
+set.seed(123)
 random_indexes = sort(sample(1:length(Oral$Y), 3, replace=F))
 df4 = data.frame()
 for (i in 1:3){
@@ -503,7 +504,7 @@ post_median_u = apply(exp(u[100:N_iter,]), 2, median)
 germany.plot(post_median_u, col=col, legend=TRUE)
 ```
 
-```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:medianexpu} Posterior median of exp(u) for all regions in Germany"}
+```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:medianexpu} Posterior median of exp(u) for all regions in Germany", fig.align = "center"}
 post_median_u = apply(exp(u[100:N_iter,]), 2, median)
 
 germany.plot(post_median_u, col=col, legend=TRUE, main = "Median exp(u)")
@@ -522,6 +523,7 @@ library(INLA)
 ```{r, echo=T, eval=T}
 # Create a copy of the dataframe Oral
 dfinla = data.frame(Oral)
+dfinla$region = seq(1,length(Oral$Y))
 
 # Copy the column region
 dfinla$region2 = dfinla$region
@@ -540,39 +542,39 @@ kappavprior = list(prior="loggamma", param=c(alpha_v, beta_v))
 #formula <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=F) + 
 #            f(region2, model="iid", hyper=list(prec=kappavprior))
 
-formula <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior)) + 
-            f(region2, model="iid", hyper=list(prec=kappavprior))
+formula <- Y~f(dfinla$region,model="besag", graph = g, hyper=list(prec=kappauprior)) + 
+            f(dfinla$region2, model="iid", hyper=list(prec=kappavprior))
 
 
 # Oral$Y = Oral$E * eta
 res <- inla(formula,family="poisson", E = dfinla$E, data=dfinla)
 
 # Look at results
-res$summary.random$region
+#res$summary.random$`dfinla|S|region`
 
 res2 = inla.hyperpar(res)
 
-germany.plot(exp(res$summary.random$region$mean), col=col, legend=TRUE)
+germany.plot(exp(res$summary.random$`dfinla|S|region`$mean), col=col, legend=TRUE)
 germany.plot(post_median_u, col=col, legend=TRUE)
 
 
-germany.plot( exp(res$summary.random$region$mean) - post_median_u, col=col, legend=TRUE)
+germany.plot( exp(res$summary.random$`dfinla|S|region`$mean) - post_median_u, col=col, legend=TRUE)
 ```
 
 ```{r, echo=T, eval=T}
-exp(res$summary.random$region$mean[random_indexes])
+exp(res$summary.random$`dfinla|S|region`$mean[random_indexes])
 post_median_u[random_indexes]
 ```
 
 ```{r, echo=T, eval=T}
-df60 = data.frame(res2$marginals.hyperpar$`Precision for region`)
+df60 = data.frame(res2$marginals.hyperpar$`Precision for dfinla|S|region`)
 df61 = data.frame(x = kappau[100:length(kappau)])
 
 ggplot() + geom_histogram(data=df61, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df60, aes(x = x, y = y, col="INLA")) + xlim(0, 40)
 ```
 
 ```{r, echo=T, eval=T}
-df60 = data.frame(res2$marginals.hyperpar$`Precision for region2`)
+df60 = data.frame(res2$marginals.hyperpar$`Precision for dfinla|S|region2`)
 df61 = data.frame(x = kappav[100:length(kappav)])
 
 ggplot() + geom_histogram(data=df61, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df60, aes(x = x, y = y, col="INLA")) + xlim(0, 500)
