@@ -19,7 +19,7 @@ showsol <- FALSE
 library(knitr)
 library(ggplot2)
 library(coda)
-opts_chunk$set(tidy.opts = list(width.cutoff = 68), tidy = TRUE, warning = FALSE, error = FALSE, message = FALSE, echo = TRUE)
+opts_chunk$set(tidy.opts = list(width.cutoff = 68), tidy = TRUE, warning = FALSE, error = FALSE, message = FALSE, echo = TRUE, fig.pos = 'H')
 ```
 
 
@@ -309,7 +309,6 @@ df1 = data.frame(kappa_u = kappau, N = 1:N_iter)
 ggplot(df1, aes(x = N, y = kappa_u)) + geom_point()
 df12 = data.frame(kappa_u = kappau[500:N_iter], N = 500:N_iter)
 ggplot(df12, aes(x = N, y = kappa_u)) + geom_point()
-plot_grid(p1,p2,nrow = 1, ncol = 2)
 ```
 ```{r, echo = F, eval = T, out.width = "50%"}
 df1 = data.frame(kappa_u = kappau, N = 1:N_iter)
@@ -399,7 +398,6 @@ acf(u[,random_indexes[1]], lag.max = 200)
 acf(u[,random_indexes[2]], lag.max = 200)
 acf(u[,random_indexes[3]], lag.max = 200)
 ```
-
 ```{r, echo = F, eval = T, out.width = "33%"}
 df5 = data.frame(u = u[,random_indexes])
 acf(u[,random_indexes[1]], lag.max = 200, main = paste0("ACF of u[",random_indexes[1],"]"))
@@ -419,7 +417,7 @@ gw = geweke.diag(df5)
 cat("zscores:", gw$z, "\n")
 cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
-$p$-values of x indicates that the chain converges during the first $10\%$ iterations for only component 89, and not for component 98 and 253 (DISSE TALLENE MÅ ENDRES FOR Å MATCHE NY SEED).
+$p$-values of `r cat(round(2*(1-pnorm(abs(gw$z))),2))` indicate that the chain converges during the first $10\%$ iterations for only component 7 and 424, and not for component 257.
 
 
 ```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:3eta}Trace plot for three random components of eta"}
@@ -435,9 +433,6 @@ The trace plot of the three components of $\boldsymbol \eta$ in figure \ref{fig:
 
 ```{r, echo = T, eval = F}
 df7 = data.frame(eta = eta[,random_indexes])
-#head(df7)
-#acf(df7, lag.max = 200)
-
 acf(eta[,random_indexes[1]], lag.max = 200)
 acf(eta[,random_indexes[2]], lag.max = 200)
 acf(eta[,random_indexes[3]], lag.max = 200)
@@ -445,24 +440,27 @@ acf(eta[,random_indexes[3]], lag.max = 200)
 
 ```{r, echo = F, eval = T, out.width = "33%"}
 df7 = data.frame(eta = eta[,random_indexes])
-acf(eta[,random_indexes[1]], lag.max = 200)
-acf(eta[,random_indexes[2]], lag.max = 200)
-acf(eta[,random_indexes[3]], lag.max = 200)
+acf(eta[,random_indexes[1]], lag.max = 200, main = paste0("ACF of eta[",random_indexes[1],"]"))
+acf(eta[,random_indexes[2]], lag.max = 200, main = paste0("ACF of eta[",random_indexes[2],"]"))
+acf(eta[,random_indexes[3]], lag.max = 200, main = paste0("ACF of eta[",random_indexes[3],"]"))
 ```
 
 Same as for the components of $\mathbf{u}$, the three components of $\boldsymbol \eta$ show varying degree of autocorrelation, but generally, all three components are highly autocorrelated.
 
-Same as for the components of $\mathbf{u}$, the three components of $\boldsymbol \eta$ show varying degree of autocorrelation, with some being highly correlated and others almost uncorrelated (SKRIV OM BASERT PÅ NY SAMPLE).
-
 Finally, the Geweke Diagnostic for the three components of $\boldsymbol \eta$ shows the following.
-```{r, echo = T, eval = T}
+```{r, echo = T, eval = F}
 gw = geweke.diag(df7)
 cat("zscores:", gw$z, "\n")
 cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
-$p$-values of x indicates that the chain converges during the first $10\%$ iterations for only component 89, and not for component 98 and 253 (DISSE TALLENE MÅ ENDRES FOR Å MATCHE NY SEED).
+```{r, echo = F, eval = T}
+gw = geweke.diag(df7)
+cat("zscores:", gw$z, "\n")
+cat("pvals:", 2*(1-pnorm(abs(gw$z))))
+```
+$p$-values of `r cat(round(2*(1-pnorm(abs(gw$z))),2))` indicate that the chain converges during the first $10\%$ iterations for only component 7, and not for component 257 and 424.
 
-SOME CONCLUDING REMARKS TO SUM IT ALL UP
+All in all, we have seen that most of the variables in our Markov chain converge during the first $10\%$ iterations. Still, most of the samples are highly autocorrelated, which is a critical flaw. High autocorrelation decreases performance of the MCMC algorithm, implying that we have to run several iterations of the algorithm to produce the equivalent of an independent sample. Despite this weakness, the chain has in fact converged, and we believe it can be used.
 
 # Exercise 4 (Effective sample size)
 To assess the quality of the samples from our Markov chain, we calculate the effective sample size for the precision parameters $\kappa_u$ and $\kappa_v$ by using the function `effectiveSize()` from the `coda` library.
