@@ -304,10 +304,11 @@ We now check a few diagnostic summaries for the precision parameters $\kappa_u$ 
 
 First, we show a trace plot of $\kappa_u$. The values in the burn-in period are really large, so we display both a plot of the whole chain, and a plot where the first 500 values are removed.
 ```{r, echo = T, eval = F, out.width = "50%"}
+library(cowplot)
 df1 = data.frame(kappa_u = kappau, N = 1:N_iter)
-ggplot(df1, aes(x = N, y = kappa_u)) + geom_point()
+p1 = ggplot(df1, aes(x = N, y = kappa_u)) + geom_point()
 df12 = data.frame(kappa_u = kappau[500:N_iter], N = 500:N_iter)
-ggplot(df12, aes(x = N, y = kappa_u)) + geom_point()
+p2 = ggplot(df12, aes(x = N, y = kappa_u)) + geom_point()
 plot_grid(p1,p2,nrow = 1, ncol = 2)
 ```
 ```{r, echo = F, eval = T, out.width = "50%"}
@@ -461,6 +462,9 @@ cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
 $p$-values of x indicates that the chain converges during the first $10\%$ iterations for only component 89, and not for component 98 and 253 (DISSE TALLENE MÅ ENDRES FOR Å MATCHE NY SEED).
 
+
+
+
 SOME CONCLUDING REMARKS TO SUM IT ALL UP
 
 # Exercise 4 (Effective sample size)
@@ -555,15 +559,15 @@ res$summary.random$region
 res2 = inla.hyperpar(res)
 
 germany.plot(exp(res$summary.random$region$mean), col=col, legend=TRUE)
-germany.plot(post_median_eta, col=col, legend=TRUE)
+germany.plot(post_median_u, col=col, legend=TRUE)
 
 
-germany.plot( exp(res$summary.random$region$mean) - post_median_eta, col=col, legend=TRUE)
+germany.plot( exp(res$summary.random$region$mean) - post_median_u, col=col, legend=TRUE)
 ```
 
 ```{r, echo=True, eval=True}
 exp(res$summary.random$region$mean[random_indexes])
-post_median_eta[random_indexes]
+post_median_u[random_indexes]
 ```
 
 ```{r, echo=True, eval=True}
