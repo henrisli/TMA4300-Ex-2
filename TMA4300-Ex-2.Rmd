@@ -232,7 +232,7 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
 }
 
 #Set number of iterations
-N_iter = 2000
+N_iter = 500
 
 #Allocate vectors and arrays 
 u = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
@@ -513,22 +513,31 @@ We see from figure \ref{fig:medianexpu} that we have some spatial structure on t
 
 # Exercise 6 (Comparison of INLA and inclusion of covariate information)
 
-```{r, echo=T, eval=T}
-g = system.file("demodata/germany.graph", package="INLA")
-library(INLA)
-```
 
 ```{r, echo=T, eval=T}
-
+library(spam)
+attach(Oral)
 # Create a copy of the dataframe Oral
 dfinla = data.frame(Oral)
+dfinla$region = seq(1, dim(Oral)[1])
 
+
+
+  
 # Copy the column region
-dfinla$region2 = region
+dfinla$region2 = dfinla$region
 ```
 
 
 ```{r, echo=T, eval=T}
+library(INLA)
+g = system.file("demodata/germany.graph", package="INLA")
+
+alpha_u = 1
+beta_u = 0.01
+alpha_v = 1
+beta_v = 0.01
+
 
 # Create kappau prior
 kappauprior = list(prior="loggamma", param=c(alpha_u, beta_u))
@@ -536,7 +545,8 @@ kappauprior = list(prior="loggamma", param=c(alpha_u, beta_u))
 kappavprior = list(prior="loggamma", param=c(alpha_v, beta_v))
 
 # eta = u(region) + v(region)
-formula_1 <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=F) + 
+### , constr=F)
+formula_1 <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior)) + 
             f(region2, model="iid", hyper=list(prec=kappavprior))
 
 formula_0 <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior)) + 
@@ -557,12 +567,12 @@ result_improved = inla.hyperpar(result)
 germany.plot(exp(result$summary.random$region$mean) - post_median_u, col=col, legend=TRUE)
 ```
 
-```{r, echo=True, eval=True}
+```{r, echo=T, eval=T}
 exp(result$summary.random$region$mean[random_indexes])
 post_median_u[random_indexes]
 ```
 
-```{r, echo=True, eval=True}
+```{r, echo=T, eval=T}
 df60 = data.frame(result$marginals.hyperpar$`Precision for region`)
 df61 = data.frame(x = kappau[1000:length(kappau)])
 df62 = data.frame(result_improved$marginals.hyperpar$`Precision for region`)
@@ -571,7 +581,7 @@ ggplot() + geom_histogram(data=df61, aes(x = x, y = ..density.., col="MCMC"), bi
 ```
 
 
-```{r, echo=True, eval=True}
+```{r, echo=T, eval=T}
 df62 = data.frame(result$marginals.hyperpar$`Precision for region2`)
 df63 = data.frame(x = kappav[1000:length(kappav)])
 df64 = data.frame(result_improved$marginals.hyperpar$`Precision for region2`)
