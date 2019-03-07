@@ -505,6 +505,7 @@ post_median_u = apply(exp(u[1000:10000,]), 2, median)
 
 germany.plot(post_median_u, col=col, legend=TRUE)
 ```
+
 ```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:medianexpu} Posterior median of exp(u) for all regions in Germany"}
 post_median_u = apply(exp(u[1000:10000,]), 2, median)
 
@@ -522,22 +523,60 @@ library(INLA)
 ```
 
 ```{r}
-head(Oral)
+# Create a copy of the dataframe Oral
+dfinla = data.frame(Oral)
+
+# Copy the column region
+dfinla$region2 = region
 ```
 
 
 ```{r}
-formula <- Y~f(region,model="besag", graph = g,
-                    hyper=list(prec=list(prior="loggamma", param=c(alpha_u,beta_u))))
 
-# Fit a Bayesian model using the inla() function
-res <- inla(formula,family="poisson", E = Oral$E, data=Oral)
+# Create kappau prior
+kappauprior = list(prior="loggamma", param=c(alpha_u, beta_u))
+# Create kappav prior
+kappavprior = list(prior="loggamma", param=c(alpha_v, beta_v))
+
+# eta = u(region) + v(region)
+# WHY DO WE NEED CONSTR = F HERE
+#formula <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=F) + 
+#            f(region2, model="iid", hyper=list(prec=kappavprior))
+
+formula <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior)) + 
+            f(region2, model="iid", hyper=list(prec=kappavprior))
+
+
+# Oral$Y = Oral$E * eta
+res <- inla(formula,family="poisson", E = dfinla$E, data=dfinla)
 
 # Look at results
-summary(res)
-# Look at the estimated marginal posterior distributions
-plot(res$marginals.fixed$`(Intercept)`)
-hist(kappau)
+res$summary.random$region
+
+res2 = inla.hyperpar(res)
+
+germany.plot(exp(res$summary.random$region$mean), col=col, legend=TRUE)
+germany.plot(post_median_eta, col=col, legend=TRUE)
+
+
+germany.plot( exp(res$summary.random$region$mean) - post_median_eta, col=col, legend=TRUE)
 ```
 
+```{r}
+exp(res$summary.random$region$mean[random_indexes])
+post_median_eta[random_indexes]
+```
 
+```{r}
+df60 = data.frame(res2$marginals.hyperpar$`Precision for region`)
+df61 = data.frame(x = kappau[1000:length(kappau)])
+
+ggplot() + geom_histogram(data=df61, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df60, aes(x = x, y = y, col="INLA")) + xlim(0, 40)
+```
+
+```{r}
+df60 = data.frame(res2$marginals.hyperpar$`Precision for region2`)
+df61 = data.frame(x = kappav[1000:length(kappav)])
+
+ggplot() + geom_histogram(data=df61, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df60, aes(x = x, y = y, col="INLA")) + xlim(0, 500)
+```
