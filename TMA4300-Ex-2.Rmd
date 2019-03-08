@@ -39,7 +39,7 @@ where the component $\mathbf{u} = (u_1, \dots, u_n)$ is spatially structured wit
 For $\mathbf{u}$, we assume that neighboring districts are more similar than distant districts. We define that two districts are neighbours if they share a common border. $\mathbf{u}$ then becomes an intrinsic Gaussian Markov random field with density
 
 $$p(\mathbf{u} \lvert \kappa_u) \propto \kappa_u^{(n-1)/2}\exp \bigg (  \frac{-\kappa_u}{2}\sum_{i\sim j}{(u_i - u_j)^2}  \bigg)$$
-```{r, echo = F, eval = T, fig.align = "center", out.width = "80%", fig.cap = "\\label{fig:smr} Standardised mortality rates (SMR)"}
+```{r, echo = F, eval = T, fig.align = "center", out.width = "60%", fig.cap = "\\label{fig:smr} Standardised mortality rates (SMR)"}
 library(spam)         # load the data
 attach(Oral)          # allow direct referencing to Y and E# load some libraries to generate nice map plots
 
@@ -231,7 +231,7 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
 }
 
 #Set number of iterations
-N_iter = 1000
+N_iter = 1500
 
 #Allocate vectors and arrays 
 u = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
@@ -294,29 +294,29 @@ for (i in 2:N_iter) {
   times[i] = as.numeric(Sys.time()) - t0 
 }
 ```
-We note that the code takes `r round(sum(times))` seconds, or `r round(sum(times)/60,1)` minutes.
+We note that the code takes `r round(sum(times))` seconds, or `r round(sum(times)/60,1)` minutes to run.
 
 # Exercise 3 (Convergence diagnostics)
 
 We now check a few diagnostic summaries for the precision parameters $\kappa_u$ and $\kappa_v$. We also do the same for three randomly chosen components of $\mathbf{u}$ and $\mathbf{v}$.
 
 First, we show a trace plot of $\kappa_u$. The values in the burn-in period are really large, so we display both a plot of the whole chain, and a plot where the first 500 values are removed.
-```{r, echo = T, eval = F, out.width = "50%"}
+```{r, echo = T, eval = F, out.width = "70%", fig.align = "center"}
 df1 = data.frame(kappa_u = c(kappau, kappau[501:N_iter]), N = c(1:N_iter,501:N_iter), type = c(rep("All iterations",N_iter), rep("First 500 discarded",N_iter-500)))
 ggplot(df1, aes(x = N, y = kappa_u)) + geom_point() + facet_wrap(.~type, scales = "free")
 ```
 
-```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:tracekappau}Trace plot of kappa u. All iterations plotted to the left, first 500 discarded plotted to the right."}
+```{r, echo = F, eval = T, out.width = "70%", fig.align = "center", fig.cap = "\\label{fig:tracekappau}Trace plot of $\\kappa_u$. All iterations plotted to the left, first 500 discarded plotted to the right."}
 df1 = data.frame(kappa_u = c(kappau, kappau[501:N_iter]), N = c(1:N_iter,501:N_iter), type = c(rep("All iterations",N_iter), rep("First 500 discarded",N_iter-500)))
 ggplot(df1, aes(x = N, y = kappa_u)) + geom_point() + facet_wrap(.~type, scales = "free")
 ```
 From the second plot, we suspect that the burn-in period might be somewhat over 500 iterations.
 
 We then display an autocorrelation plot for $\kappa_u$.
-```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:acfku}Autocorrelation plot for kappa u"}
+```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:acfku}Autocorrelation plot for $\\kappa_u$"}
 acf(kappau, lag.max = 60)
 ```
-From the plot, we see that we can use only every $\sim 45$^th^ iteration to get a correlation which is not statistically significant. Taking into account the burn-in period, we would then only get about 200 uncorrelated samples from our Markov chain of size $N=50000$.
+From the plot, we see that we can use only every $\sim 50$^th^ iteration to get a correlation which is not statistically significant. Taking into account the burn-in period, we would then only get about 1000 uncorrelated samples from our Markov chain of size $N=50000$.
 
 To conclude our diagnosis of the chain for $\kappa_u$, we check the chain for convergence by using the function `geweke.diag()` from the R package `coda`. The function provides a $z$-value, which we use to compute a corresponding $p$-value. Large $p$-values indicates that the chain has converged during the first $10\%$ iterations.
 ```{r, echo = T, eval = F}
@@ -332,11 +332,11 @@ cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 A $p$-value of `r round(2*(1-pnorm(abs(gw$z))),2)` indicates that the chain did converge during the first $10\%$ iterations, because this value is above any reasonable significance level.
 
 We then move on to $\kappa_v$, and display both a plot of the whole chain, and a plot where the first 500 values are removed.
-```{r, echo = T, eval = F, out.width = "50%"}
+```{r, echo = T, eval = F, out.width = "70%"}
 df1 = data.frame(kappa_v = c(kappav, kappav[501:N_iter]), N = c(1:N_iter,501:N_iter), type = c(rep("All iterations",N_iter), rep("First 500 discarded",N_iter-500)))
 ggplot(df1, aes(x = N, y = kappa_v)) + geom_point() + facet_wrap(.~type, scales = "free")
 ```
-```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:tracekappav}Trace plot of kappa v. All iterations plotted to the left, first 500 discarded plotted to the right."}
+```{r, echo = F, eval = T, out.width = "70%", fig.align = "center", fig.cap = "\\label{fig:tracekappav}Trace plot of $\\kappa_v$. All iterations plotted to the left, first 500 discarded plotted to the right."}
 df1 = data.frame(kappa_v = c(kappav, kappav[501:N_iter]), N = c(1:N_iter,501:N_iter), type = c(rep("All iterations",N_iter), rep("First 500 discarded",N_iter-500)))
 ggplot(df1, aes(x = N, y = kappa_v)) + geom_point() + facet_wrap(.~type, scales = "free")
 ```
@@ -369,7 +369,7 @@ cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 A $p$-value of `r round(2*(1-pnorm(abs(gw$z))),2)` indicates that the chain converged during the first $10\%$ iterations.
 
 We then draw three random components of $\mathbf{u}$ and $\boldsymbol \eta$ and plot trace plots, autocorrelation functions and use the function `geweke.diag()` to check for convergence.
-```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:3u}Trace plot for three random components of u"}
+```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:3u}Trace plot for three random components of $\\mathbf{u}$."}
 set.seed(123)
 random_indexes = sort(sample(1:length(Oral$Y), 3, replace=F))
 df4 = data.frame()
@@ -378,7 +378,7 @@ for (i in 1:3){
   df = data.frame(u = u[, index], N = 1:N_iter, shape = as.factor(i), col=as.factor(index))
   df4 = rbind(df4, df)
 }
-ggplot(df4, aes(x = N, y = u, shape = shape, col=col)) + geom_point() + scale_shape(solid=F) + guides(shape = F)
+ggplot(df4, aes(x = N, y = u, shape = shape, col=col)) + geom_point() + scale_shape(solid=F) + guides(shape = F) + ggtitle("Trace plot for u")
 ```
 The trace plot for three components of $\mathbf{u}$ in figure \ref{fig:3u} looks correct, with a small burn-in period.
 
@@ -408,17 +408,17 @@ gw = geweke.diag(df5)
 cat("zscores:", gw$z, "\n")
 cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
-$p$-values of `r cat(round(2*(1-pnorm(abs(gw$z))),2))` indicate that the chain did converge during the first $10\%$ iterations only for component 7 and 424, and not for component 257.
+$p$-values of 0.41, 0.10 and 0.89 indicate that the chain did converge during the first $10\%$ iterations only for all the three components in consideration.
 
 
-```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:3eta}Trace plot for three random components of eta"}
+```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:3eta}Trace plot for three random components of $\\boldsymbol \\eta$."}
 df4 = data.frame()
 for (i in 1:3){
   index = random_indexes[i]
   df = data.frame(eta = eta[, index], N = 1:N_iter, shape = as.factor(i), col=as.factor(index))
   df4 = rbind(df4, df)
 }
-ggplot(df4, aes(x = N, y = eta, shape = shape, col=col)) + geom_point() + scale_shape(solid=F)+ guides(shape = F)
+ggplot(df4, aes(x = N, y = eta, shape = shape, col=col)) + geom_point() + scale_shape(solid=F)+ guides(shape = F) + ggtitle("Trace plot for eta")
 ```
 The trace plot of the three components of $\boldsymbol \eta$ in figure \ref{fig:3eta} looks correct, with a small burn-in period.
 
@@ -436,7 +436,7 @@ acf(eta[,random_indexes[2]], lag.max = 200, main = paste0("ACF of eta[",random_i
 acf(eta[,random_indexes[3]], lag.max = 200, main = paste0("ACF of eta[",random_indexes[3],"]"))
 ```
 
-Same as for the components of $\mathbf{u}$, the three components of $\boldsymbol \eta$ show varying degree of autocorrelation, but generally, all three components are highly autocorrelated.
+Same as for the components of $\mathbf{u}$, the three components of $\boldsymbol \eta$ show varying degree of autocorrelation. The autocorrelations are comparable in size to the autocorrelations of $\mathbf{u}$, and much smaller than the autocorrelation of $\kappa_v$.
 
 Finally, the Geweke Diagnostic for the three components of $\boldsymbol \eta$ shows the following.
 ```{r, echo = T, eval = F}
@@ -449,9 +449,9 @@ gw = geweke.diag(df7)
 cat("zscores:", gw$z, "\n")
 cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
-$p$-values of `r cat(round(2*(1-pnorm(abs(gw$z))),2))` indicate that the chain converges during the first $10\%$ iterations for only component 7, and not for component 257 and 424. ENDRE ALLE DISSE BASERT PÅ NYE ITERASJONER!!!!!!!!!!!!!!!
+$p$-values of 0.66, 0.1 and 0.19 indicate that the chain converges during the first $10\%$ iterations for all three components in consideration.
 
-SI NOE OM BURN-IN HER OGSÅ. All in all, we have seen that most of the variables in our Markov chain converge during the first $10\%$ iterations. Still, most of the samples are highly autocorrelated, which is a critical flaw. High autocorrelation decreases performance of the MCMC algorithm, implying that we have to run several iterations of the algorithm to produce the equivalent of an independent sample. Despite this weakness, the chain has in fact converged, and we believe it can be used.
+We have seen that we have a relative short burn-in period. To be safe, we consider the first 1000 iterations as burn-in when doing estimation. All in all, we have seen that most of the variables in our Markov chain converge during the first $10\%$ iterations. Still, most of the samples are highly autocorrelated, which is a critical flaw. High autocorrelation decreases performance of the MCMC algorithm, implying that we have to run several iterations of the algorithm to produce the equivalent of an independent sample. Despite this weakness, the chain has in fact converged, and we believe it can be used.
 
 # Exercise 4 (Effective sample size)
 To assess the quality of the samples from our Markov chain, we calculate the effective sample size for the precision parameters $\kappa_u$ and $\kappa_v$ by using the function `effectiveSize()` from the `coda` library.
@@ -465,10 +465,9 @@ cat("ESS of kappa_v: ", effectiveSize(kappav))
 cat("ESS of kappa u: ", effectiveSize(kappau), "\n")
 cat("ESS of kappa_v: ", effectiveSize(kappav))
 ```
-The ESS is the estimated number of independent samples needed to obtain a parameter estimate with the same precision as the MCMC estimate based on $N$ dependent samples. In our case, $N=50000$, which means that the quality of our $\kappa_u$ sample is as good as `r round(effectiveSize(kappau))` independent samples. Also, our $\kappa_v$ sample is as good as `r round(effectiveSize(kappav))` independent samples. The $\kappa_u$ samples are better than the $\kappa_v$ samples, which also could be seen by the fact that the $\kappa_u$ samples are much less correlated than the $\kappa_v$ samples.
+The ESS is the estimated number of independent samples needed to obtain a parameter estimate with the same precision as the MCMC estimate based on $N$ dependent samples. In our case, $N=50000$, which means that the quality of our $\kappa_u$ sample is as good as `r round(effectiveSize(kappau))` independent samples. Also, our $\kappa_v$ sample is as good as `r round(effectiveSize(kappav))` independent samples, which is not very good. The $\kappa_u$ samples are better than the $\kappa_v$ samples, which also could be seen by the fact that the $\kappa_u$ samples are much less correlated than the $\kappa_v$ samples.
 
-Because the parameters are correlated, we get high autocorrelation in the Markov chain, and hence a low value for the ESS. One way to improve this is by blocking. Blocking is done by simulating the variables together, and accepting or rejecting all of the new proposed variables simultaneously.
-How could the MCMC sampler be changed to possibly improve the ESS values??!?!?!?!?!
+Because the parameters are correlated, we get high autocorrelation in the Markov chain, and hence a low value for the ESS. One way to improve this is by blocking. Blocking is done by simulating the variables together, and accepting or rejecting all of the new proposed variables simultaneously. SKRIV NOE OM METROPOLIS HASTINGS PROPOSAL DENSITY?!?!?!?!?!?!????!?!?
 
 We also compute the relative ESS, which is the ESS divided by the running time of the MCMC algorithm. The relative ESS can be interpreted as a measure for the number of independent samples produced by the algorithm per second. We get the following values for the relative ESS of $\kappa_u$ and $\kappa_v$.
 ```{r, echo = T, eval = F}
@@ -489,17 +488,17 @@ This means that the MCMC algorithm produces the equivalent of `r effectiveSize(k
 Finally, we plot the posterior median of $\exp(\mathbf{u})$ for all regions using the function `germany.plot()`. 
 
 ```{r, echo = T, eval = F, out.width = "50%", fig.align = "center"}
-post_median_u = apply(exp(u[100:N_iter,]), 2, median)
+post_median_u = apply(exp(u[1000:N_iter,]), 2, median)
 
 germany.plot(post_median_u, col=col, legend=TRUE)
 ```
 
-```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:medianexpu} Posterior median of exp(u) for all regions in Germany", fig.align = "center"}
-post_median_u = apply(exp(u[100:N_iter,]), 2, median)
+```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:medianexpu} Posterior median of $\\exp(\\mathbf{u})$ for all regions in Germany.", fig.align = "center"}
+post_median_u = apply(exp(u[1000:N_iter,]), 2, median)
 
 germany.plot(post_median_u, col=col, legend=TRUE, main = "Median exp(u)")
 ```
-We see from figure \ref{fig:medianexpu} that we have some spatial structure on the variable $\mathbf{u}$. We get high values of $\exp(\mathbf{u})$ in the south-west regions and somewhat high values in regions in the north-east. Additionally, we get small values of $\exp(\mathbf{u})$ in the south-east, north-west, north and middle-east around the cities of Munich, Düsseldorf, Kiel and Leipzig. We also see some clear deviation from the standardised mortality rates in figure \ref{fig:smr}, especially in the south-west. $\exp(\mathbf{u})$ is also smoother than the SMR from figure \ref{fig:smr}
+We see from figure \ref{fig:medianexpu} that we have some spatial structure on the variable $\mathbf{u}$. We get high values of $\exp(\mathbf{u})$ in the south-west regions and somewhat high values in regions in the north-east. Additionally, we get small values of $\exp(\mathbf{u})$ in the south-east, north-west, north and middle-east around the cities of Munich, Düsseldorf, Kiel and Leipzig. We also see some clear deviation from the standardised mortality rates in figure \ref{fig:smr}, especially in the south-west. $\exp(\mathbf{u})$ is also smoother than the SMR from figure \ref{fig:smr}.
 
 
 
