@@ -545,23 +545,15 @@ kappavprior = list(prior="loggamma", param=c(alpha_v, beta_v))
 
 # eta = u(region) + v(region)
 ### , constr=F)
-formula_1 <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=T) + 
-            f(region2, model="iid", hyper=list(prec=kappavprior))
-
-formula_0 <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=F) + 
+formula <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=T) + 
             f(region2, model="iid", hyper=list(prec=kappavprior))
 
 # Oral$Y = Oral$E * eta
-result_1 <- inla(formula_1, family="poisson", E = dfinla$E, data=dfinla,
+result <- inla(formula, family="poisson", E = dfinla$E, data=dfinla,
                  control.compute = list(dic=TRUE))
-result_0 <- inla(formula_0, family="poisson", E = dfinla$E, data=dfinla,
-                 control.compute = list(dic=TRUE))
-```
-
-```{r}
-result = result_0
 result_improved = inla.hyperpar(result)
 ```
+
 
 ```{r}
 germany.plot(exp(result$summary.random$region$mean) - post_median_u, col=col, legend=TRUE)
@@ -589,7 +581,10 @@ df64 = data.frame(result_improved$marginals.hyperpar$`Precision for region2`)
 ggplot() + geom_histogram(data=df63, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df62, aes(x = x, y = y, col="INLA")) + geom_line(data=df64, aes(x = x, y = y, col="INLA - improved")) + xlim(40, 500)
 ```
 
-```{r, fig.asp=0.5, fig.ncol = 1, fig.cap="output",fig.align = "center"}
+```{r, echo = F, eval = T, out.width = "33%"}
+library(cowplot)
+library(gridExtra)
+
 df650 = data.frame(result$marginals.random$region[index])
 df651 = data.frame(x = u[, index])
 df652 = data.frame(result_improved$marginals.random$region[index])
@@ -620,9 +615,7 @@ colnames(df672) = c("x", "y")
 index = random_indexes[3]
 p3 = ggplot() + geom_histogram(data=df671, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df670, aes(x = x, y = y, col="INLA")) + geom_line(data=df672, aes(x = x, y = y, col="INLA - improved")) + xlab(paste("u[", index, "]", sep=""))
 
-p1
-p2
-p3
+grid.arrange(p1, p2, p3, nrow=1)
 ```
 
 DO THE SAME FOR ETA
@@ -651,7 +644,7 @@ result_3 <- inla(formula_3, family="poisson", E = dfinla2$E, data=dfinla2,
 ```
 
 ```{r}
-cat("model w/o smoking", result_0$dic$dic, "\n")
+cat("model w/o smoking", result$dic$dic, "\n")
 cat("model w/ smoking", result_2$dic$dic, "\n")
 cat("model w/ smoking RW2", result_3$dic$dic)
 
