@@ -231,7 +231,7 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
 }
 
 #Set number of iterations
-N_iter = 500
+N_iter = 1000
 
 #Allocate vectors and arrays 
 u = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
