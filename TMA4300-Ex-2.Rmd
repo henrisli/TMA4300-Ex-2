@@ -541,18 +541,28 @@ formula <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), co
 # Oral$Y = Oral$E * eta
 result <- inla(formula, family="poisson", E = dfinla$E, data=dfinla,
                  control.compute = list(dic=TRUE))
+
+# We can use inla.hyperpar to get improved estimates of the marginals of
+#  the hyperparameters kappa_u and kappa_v
 result_improved = inla.hyperpar(result)
 ```
 
 
-```{r}
+```{r, echo = T, eval = F, out.width = "50%", fig.align = "center"}
 germany.plot(exp(result$summary.random$region$mean) - post_median_u, col=col, legend=TRUE)
 ```
+
+```{r, echo = F, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:medianexpu} The difference between the MCMC estimate of the posterior median of exp(u) and the INLA estimate of exp(u) for all regions in Germany."}
+germany.plot(exp(result$summary.random$region$mean) - post_median_u, col=col, legend=TRUE)
+```
+
 
 ```{r, echo=T, eval=T}
 exp(result$summary.random$region$mean[random_indexes])
 post_median_u[random_indexes]
 ```
+For our random indices we observe that the estimates of $u$ are close.  
+
 
 ```{r, echo=T, eval=T}
 
@@ -633,10 +643,10 @@ df70 = data.frame(id = seq(1, length(result_3$summary.random$smoking$mean)),
                   bot025 = result_3$summary.random$smoking$`0.025quant`,
                   top975 = result_3$summary.random$smoking$`0.975quant`)
 
-ggplot() + geom_ribbon(data=df70, aes(x = id, ymin=bot025,ymax=top975)) +
-  geom_line(data=df70, aes(x = id, y = mean, col="mean"), size=2) +
-  geom_line(data=df70, aes(x = id, y = bot025, col="bot025"), size = 2) + 
-  geom_line(data=df70, aes(x = id, y = top975, col="top975"), size=2) + 
+ggplot() + geom_ribbon(data=df70, aes(x = id, ymin=bot025,ymax=top975), alpha=0.50) +
+  geom_line(data=df70, aes(x = id, y = mean, col="mean"), size=1) +
+  geom_line(data=df70, aes(x = id, y = bot025, col="bot025"), size = 1) + 
+  geom_line(data=df70, aes(x = id, y = top975, col="top975"), size=1) + 
   ylab("f(smoking)") + xlab("smoking")
   
 
