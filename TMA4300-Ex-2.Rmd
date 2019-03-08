@@ -306,7 +306,7 @@ df1 = data.frame(kappa_u = c(kappau, kappau[501:N_iter]), N = c(1:N_iter,501:N_i
 ggplot(df1, aes(x = N, y = kappa_u)) + geom_point() + facet_wrap(.~type, scales = "free")
 ```
 
-```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:tracekappau}Trace plot of kappa_u. All iterations plotted to the left, first 500 discarded plotted to the right."}
+```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:tracekappau}Trace plot of kappa u. All iterations plotted to the left, first 500 discarded plotted to the right."}
 df1 = data.frame(kappa_u = c(kappau, kappau[501:N_iter]), N = c(1:N_iter,501:N_iter), type = c(rep("All iterations",N_iter), rep("First 500 discarded",N_iter-500)))
 ggplot(df1, aes(x = N, y = kappa_u)) + geom_point() + facet_wrap(.~type, scales = "free")
 ```
@@ -336,7 +336,7 @@ We then move on to $\kappa_v$, and display both a plot of the whole chain, and a
 df1 = data.frame(kappa_v = c(kappav, kappav[501:N_iter]), N = c(1:N_iter,501:N_iter), type = c(rep("All iterations",N_iter), rep("First 500 discarded",N_iter-500)))
 ggplot(df1, aes(x = N, y = kappa_v)) + geom_point() + facet_wrap(.~type, scales = "free")
 ```
-```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:tracekappau}Trace plot of kappa_v. All iterations plotted to the left, first 500 discarded plotted to the right."}
+```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:tracekappav}Trace plot of kappa v. All iterations plotted to the left, first 500 discarded plotted to the right."}
 df1 = data.frame(kappa_v = c(kappav, kappav[501:N_iter]), N = c(1:N_iter,501:N_iter), type = c(rep("All iterations",N_iter), rep("First 500 discarded",N_iter-500)))
 ggplot(df1, aes(x = N, y = kappa_v)) + geom_point() + facet_wrap(.~type, scales = "free")
 ```
