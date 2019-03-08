@@ -40,7 +40,6 @@ For $\mathbf{u}$, we assume that neighboring districts are more similar than dis
 
 $$p(\mathbf{u} \lvert \kappa_u) \propto \kappa_u^{(n-1)/2}\exp \bigg (  \frac{-\kappa_u}{2}\sum_{i\sim j}{(u_i - u_j)^2}  \bigg)$$
 ```{r, echo = F, eval = T, fig.align = "center", out.width = "80%", fig.cap = "\\label{fig:smr} Standardised mortality rates (SMR)"}
-set.seed(123)
 library(spam)         # load the data
 attach(Oral)          # allow direct referencing to Y and E# load some libraries to generate nice map plots
 
@@ -183,6 +182,7 @@ beta_v = 0.01
 
 
 ```{r, echo = T, eval = T}
+set.seed(123)
 source("dmvnorm.R")
 
 sample_u = function(kappa_v, kappa_u, eta){
@@ -220,8 +220,6 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
   b_canonical = kappa_v * u + b_taylor
   A_canonical = kappa_v * diag.spam(n) + diag.spam(c_taylor)
   
-  #SKRIVE INN DMVNORM HER
-  #res = eta %*% b_canonical - 1/2 * t(eta) %*% A_canonical %*% eta
   res = dmvnorm.canonical(eta, b_canonical, A_canonical)
   
   if (log){
@@ -381,6 +379,7 @@ A $p$-value of `r round(2*(1-pnorm(abs(gw$z))),2)` indicates that the chain conv
 
 We then draw three random components of $\mathbf{u}$ and $\boldsymbol \eta$ and plot trace plots, autocorrelation functions and use the function `geweke.diag()` to check for convergence.
 ```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:3u}Trace plot for three random components of u"}
+set.seed(123)
 random_indexes = sort(sample(1:length(Oral$Y), 3, replace=F))
 df4 = data.frame()
 for (i in 1:3){
@@ -459,7 +458,7 @@ gw = geweke.diag(df7)
 cat("zscores:", gw$z, "\n")
 cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
-$p$-values of `r cat(round(2*(1-pnorm(abs(gw$z))),2))` indicate that the chain converges during the first $10\%$ iterations for only component 7, and not for component 257 and 424.
+$p$-values of `r cat(round(2*(1-pnorm(abs(gw$z))),2))` indicate that the chain converges during the first $10\%$ iterations for only component 7, and not for component 257 and 424. ENDRE ALLE DISSE BASERT PÅ NYE ITERASJONER!!!!!!!!!!!!!!!
 
 SI NOE OM BURN-IN HER OGSÅ. All in all, we have seen that most of the variables in our Markov chain converge during the first $10\%$ iterations. Still, most of the samples are highly autocorrelated, which is a critical flaw. High autocorrelation decreases performance of the MCMC algorithm, implying that we have to run several iterations of the algorithm to produce the equivalent of an independent sample. Despite this weakness, the chain has in fact converged, and we believe it can be used.
 
@@ -503,7 +502,7 @@ post_median_u = apply(exp(u[100:N_iter,]), 2, median)
 germany.plot(post_median_u, col=col, legend=TRUE)
 ```
 
-```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:medianexpu} Posterior median of exp(u) for all regions in Germany"}
+```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:medianexpu} Posterior median of exp(u) for all regions in Germany", fig.align = "center"}
 post_median_u = apply(exp(u[100:N_iter,]), 2, median)
 
 germany.plot(post_median_u, col=col, legend=TRUE, main = "Median exp(u)")
@@ -522,8 +521,8 @@ attach(Oral)
 
 # Create a copy of the dataframe Oral
 dfinla = data.frame(Oral)
-dfinla$region = seq(1, dim(Oral)[1])
-  
+dfinla$region = seq(1,length(Oral$Y))
+
 # Copy the column region
 dfinla$region2 = dfinla$region
 ```
@@ -544,9 +543,9 @@ kappauprior = list(prior="loggamma", param=c(alpha_u, beta_u))
 kappavprior = list(prior="loggamma", param=c(alpha_v, beta_v))
 
 # eta = u(region) + v(region)
-### , constr=F)
 formula <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=T) + 
             f(region2, model="iid", hyper=list(prec=kappavprior))
+
 
 # Oral$Y = Oral$E * eta
 result <- inla(formula, family="poisson", E = dfinla$E, data=dfinla,
@@ -565,6 +564,7 @@ post_median_u[random_indexes]
 ```
 
 ```{r, echo=T, eval=T}
+
 df60 = data.frame(result$marginals.hyperpar$`Precision for region`)
 df61 = data.frame(x = kappau[1000:length(kappau)])
 df62 = data.frame(result_improved$marginals.hyperpar$`Precision for region`)
