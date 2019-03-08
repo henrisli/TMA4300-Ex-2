@@ -266,8 +266,7 @@ for (i in 2:N_iter) {
   kappav[i] = rgamma(1, n/2 + alpha_v, beta_v + 1/2 * t(eta[i-1,] - u[i-1,])%*%(eta[i-1,] - u[i-1,]))
   
   # Sample u
-  res = sample_u(kappav[i], kappau[i], eta[i-1,])
-  u[i, ] = res
+  u[i, ] = sample_u(kappav[i], kappau[i], eta[i-1,])
   
   # Sample eta
   z = eta[i-1,]
@@ -303,17 +302,13 @@ We now check a few diagnostic summaries for the precision parameters $\kappa_u$ 
 
 First, we show a trace plot of $\kappa_u$. The values in the burn-in period are really large, so we display both a plot of the whole chain, and a plot where the first 500 values are removed.
 ```{r, echo = T, eval = F, out.width = "50%"}
-df1 = data.frame(kappa_u = kappau, N = 1:N_iter)
-ggplot(df1, aes(x = N, y = kappa_u)) + geom_point()
-df12 = data.frame(kappa_u = kappau[500:N_iter], N = 500:N_iter)
-ggplot(df12, aes(x = N, y = kappa_u)) + geom_point()
+df1 = data.frame(kappa_u = c(kappau, kappau[501:N_iter]), N = c(1:N_iter,501:N_iter), type = c(rep("All iterations",N_iter), rep("First 500 discarded",N_iter-500)))
+ggplot(df1, aes(x = N, y = kappa_u)) + geom_point() + facet_wrap(.~type, scales = "free")
 ```
 
-```{r, echo = F, eval = T, out.width = "50%"}
-df1 = data.frame(kappa_u = kappau, N = 1:N_iter)
-ggplot(df1, aes(x = N, y = kappa_u)) + geom_point()
-df12 = data.frame(kappa_u = kappau[500:N_iter], N = 500:N_iter)
-ggplot(df12, aes(x = N, y = kappa_u)) + geom_point()
+```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:tracekappau}Trace plot of kappa_u. All iterations plotted to the left, first 500 discarded plotted to the right."}
+df1 = data.frame(kappa_u = c(kappau, kappau[501:N_iter]), N = c(1:N_iter,501:N_iter), type = c(rep("All iterations",N_iter), rep("First 500 discarded",N_iter-500)))
+ggplot(df1, aes(x = N, y = kappa_u)) + geom_point() + facet_wrap(.~type, scales = "free")
 ```
 From the second plot, we suspect that the burn-in period might be somewhat over 500 iterations.
 
@@ -338,16 +333,12 @@ A $p$-value of `r round(2*(1-pnorm(abs(gw$z))),2)` indicates that the chain did 
 
 We then move on to $\kappa_v$, and display both a plot of the whole chain, and a plot where the first 500 values are removed.
 ```{r, echo = T, eval = F, out.width = "50%"}
-df2 = data.frame(kappa_v = kappav, N = 1:N_iter)
-ggplot(df2, aes(x = N, y = kappa_v)) + geom_point()
-df21 = data.frame(kappa_v = kappav[500:N_iter], N = 500:N_iter)
-ggplot(df21, aes(x = N, y = kappa_v)) + geom_point()
+df1 = data.frame(kappa_v = c(kappav, kappav[501:N_iter]), N = c(1:N_iter,501:N_iter), type = c(rep("All iterations",N_iter), rep("First 500 discarded",N_iter-500)))
+ggplot(df1, aes(x = N, y = kappa_v)) + geom_point() + facet_wrap(.~type, scales = "free")
 ```
-```{r, echo = F, eval = T, out.width = "50%"}
-df2 = data.frame(kappa_v = kappav, N = 1:N_iter)
-ggplot(df2, aes(x = N, y = kappa_v)) + geom_point()
-df21 = data.frame(kappa_v = kappav[500:N_iter], N = 500:N_iter)
-ggplot(df21, aes(x = N, y = kappa_v)) + geom_point()
+```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:tracekappau}Trace plot of kappa_v. All iterations plotted to the left, first 500 discarded plotted to the right."}
+df1 = data.frame(kappa_v = c(kappav, kappav[501:N_iter]), N = c(1:N_iter,501:N_iter), type = c(rep("All iterations",N_iter), rep("First 500 discarded",N_iter-500)))
+ggplot(df1, aes(x = N, y = kappa_v)) + geom_point() + facet_wrap(.~type, scales = "free")
 ```
 Also here, we suspect that the burn-in period might be somewhat over 500 iterations.
 
@@ -476,6 +467,7 @@ cat("ESS of kappa_v: ", effectiveSize(kappav))
 ```
 The ESS is the estimated number of independent samples needed to obtain a parameter estimate with the same precision as the MCMC estimate based on $N$ dependent samples. In our case, $N=50000$, which means that the quality of our $\kappa_u$ sample is as good as `r round(effectiveSize(kappau))` independent samples. Also, our $\kappa_v$ sample is as good as `r round(effectiveSize(kappav))` independent samples. The $\kappa_u$ samples are better than the $\kappa_v$ samples, which also could be seen by the fact that the $\kappa_u$ samples are much less correlated than the $\kappa_v$ samples.
 
+Because the parameters are correlated, we get high autocorrelation in the Markov chain, and hence a low value for the ESS. One way to improve this is by blocking. Blocking is done by simulating the variables together, and accepting or rejecting all of the new proposed variables simultaneously.
 How could the MCMC sampler be changed to possibly improve the ESS values??!?!?!?!?!
 
 We also compute the relative ESS, which is the ESS divided by the running time of the MCMC algorithm. The relative ESS can be interpreted as a measure for the number of independent samples produced by the algorithm per second. We get the following values for the relative ESS of $\kappa_u$ and $\kappa_v$.
