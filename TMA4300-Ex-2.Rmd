@@ -573,41 +573,27 @@ df64 = data.frame(result_improved$marginals.hyperpar$`Precision for region2`)
 ggplot() + geom_histogram(data=df63, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df62, aes(x = x, y = y, col="INLA")) + geom_line(data=df64, aes(x = x, y = y, col="INLA - improved")) + xlim(40, 500)
 ```
 
-```{r, echo = F, eval = T, out.width = "33%"}
-library(cowplot)
-library(gridExtra)
-
-df650 = data.frame(result$marginals.random$region[index])
-df651 = data.frame(x = u[, index])
-df652 = data.frame(result_improved$marginals.random$region[index])
-  
-colnames(df650) = c("x", "y")
-colnames(df652) = c("x", "y")
-
+```{r, echo = F, eval = T}
 index = random_indexes[1]
-p1 = ggplot() + geom_histogram(data=df651, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df650, aes(x = x, y = y, col="INLA")) + geom_line(data=df652, aes(x = x, y = y, col="INLA - improved")) + xlab(paste("u[", index, "]", sep=""))
-
-df660 = data.frame(result$marginals.random$region[index])
-df661 = data.frame(x = u[, index])
-df662 = data.frame(result_improved$marginals.random$region[index])
-  
-colnames(df660) = c("x", "y")
-colnames(df662) = c("x", "y")
+df1 = data.frame(result$marginals.random$region[index], idx=index); colnames(df1) = c("x", "y", "idx")
+df1_imp = data.frame(result_improved$marginals.random$region[index], idx=index); colnames(df1_imp) = c("x", "y", "idx")
+df1_samp = data.frame(x = u[,index], idx=index)
 
 index = random_indexes[2]
-p2 = ggplot() + geom_histogram(data=df661, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df660, aes(x = x, y = y, col="INLA")) + geom_line(data=df662, aes(x = x, y = y, col="INLA - improved")) + xlab(paste("u[", index, "]", sep=""))
-
-df670 = data.frame(result$marginals.random$region[index])
-df671 = data.frame(x = u[, index])
-df672 = data.frame(result_improved$marginals.random$region[index])
-  
-colnames(df670) = c("x", "y")
-colnames(df672) = c("x", "y")
+df2 = data.frame(result$marginals.random$region[index], idx=index); colnames(df2) = c("x", "y", "idx")
+df2_imp = data.frame(result_improved$marginals.random$region[index], idx=index); colnames(df2_imp) = c("x", "y", "idx")
+df2_samp = data.frame(x = u[,index], idx=index)
 
 index = random_indexes[3]
-p3 = ggplot() + geom_histogram(data=df671, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df670, aes(x = x, y = y, col="INLA")) + geom_line(data=df672, aes(x = x, y = y, col="INLA - improved")) + xlab(paste("u[", index, "]", sep=""))
+df3 = data.frame(result$marginals.random$region[index], idx=index); colnames(df3) = c("x", "y", "idx")
+df3_imp = data.frame(result_improved$marginals.random$region[index], idx=index); colnames(df3_imp) = c("x", "y", "idx")
+df3_samp = data.frame(x = u[,index], idx=index)
 
-grid.arrange(p1, p2, p3, nrow=1)
+df = rbind(df1, df2, df3)
+df_imp = rbind(df1_imp, df2_imp, df3_imp)
+df_samp = rbind(df1_samp, df2_samp, df3_samp)
+
+ggplot() + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=df_imp, aes(x = x, y = y, col="INLA - improved")) + geom_histogram(data=df_samp, aes(x = x, y = ..density.., col="MCMC"), bins=100) + facet_wrap(~idx) + ylab("density") + xlim(-0.75, 0.75)
 ```
 
 DO THE SAME FOR ETA
@@ -636,9 +622,9 @@ result_3 <- inla(formula_3, family="poisson", E = dfinla2$E, data=dfinla2,
 ```
 
 ```{r}
-cat("model w/o smoking", result$dic$dic, "\n")
-cat("model w/ smoking", result_2$dic$dic, "\n")
-cat("model w/ smoking RW2", result_3$dic$dic)
+cat("model w/o smoking:", result$dic$dic, "\n")
+cat("model w/  smoking lin:", result_2$dic$dic, "\n")
+cat("model w/  smoking RW2:", result_3$dic$dic)
 
 ```
 
