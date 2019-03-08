@@ -505,6 +505,14 @@ We see from figure \ref{fig:medianexpu} that we have some spatial structure on t
 # Exercise 6 (Comparison of INLA and inclusion of covariate information)
 
 ## a)
+We now want to implement the same model using `R-INLA`. We set the same priors for $\kappa_u$ and $\kappa_v$. The spatial structure requires the path to the geographical map of Germany. We therefore load the path to the Germany map.
+
+```{r, echo = T, eval = T}
+library(INLA)
+g = system.file("demodata/germany.graph", package="INLA")
+```
+
+Then we use `R-INLA` to compute posterior marginals obtained by INLA for $\kappa_u$, $\kappa_v$ and three ramdomly chosen components of $\mathbf{u}$ and $\boldsymbol \eta$. We can also get improved estimates of the posterior marginals for the precision parameters by applying `inla.hyperpar(result)` on the original INLA result object.
 
 ```{r, echo=T, eval=T}
 library(spam)
@@ -519,9 +527,6 @@ dfinla$region2 = dfinla$region
 ```
 
 ```{r, echo=T, eval=T}
-library(INLA)
-g = system.file("demodata/germany.graph", package="INLA")
-
 alpha_u = 1
 beta_u = 0.01
 alpha_v = 1
@@ -546,24 +551,24 @@ result <- inla(formula, family="poisson", E = dfinla$E, data=dfinla,
 #  the hyperparameters kappa_u and kappa_v
 result_improved = inla.hyperpar(result)
 ```
-
+Having obtained the posterior marginals from INLA, we compare these estimates to the one obtained by MCMC, and plot the difference of $\exp(\mathbf{u})$ on the Germany map.
 
 ```{r, echo = T, eval = F, out.width = "50%", fig.align = "center"}
 germany.plot(exp(result$summary.random$region$mean) - post_median_u, col=col, legend=TRUE)
 ```
-
-```{r, echo = F, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:medianexpu} The difference between the MCMC estimate of the posterior median of exp(u) and the INLA estimate of exp(u) for all regions in Germany."}
+```{r, echo = F, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:medianexpucomp} The difference between the MCMC estimate of the posterior median of $\\exp(\\mathbf{u})$ and the INLA estimate of $\\exp(\\mathbf{u})$ for all regions in Germany."}
 germany.plot(exp(result$summary.random$region$mean) - post_median_u, col=col, legend=TRUE)
 ```
+From figure \ref{fig:medianexpucomp}, we see that we generally have small differences between the computed $\exp(\mathbf{u})$ from MCMC and INLA, with some larger outliers.
 
-
+<!---
 ```{r, echo=T, eval=T}
 exp(result$summary.random$region$mean[random_indexes])
 post_median_u[random_indexes]
 ```
 For our random indices we observe that the estimates of $u$ are close.  
-
-
+--->
+LEGG PÅ CAPTIONS OG DISKUTER FØLGENDE PLOTS.
 ```{r, echo=T, eval=T}
 
 df60 = data.frame(result$marginals.hyperpar$`Precision for region`)
@@ -604,7 +609,6 @@ df_samp = rbind(df1_samp, df2_samp, df3_samp)
 
 ggplot() + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=df_imp, aes(x = x, y = y, col="INLA - improved")) + geom_histogram(data=df_samp, aes(x = x, y = ..density.., col="MCMC"), bins=100) + facet_wrap(~idx) + ylab("density") + xlim(-0.75, 0.75)
 ```
-
 DO THE SAME FOR ETA
 
 ## b)
