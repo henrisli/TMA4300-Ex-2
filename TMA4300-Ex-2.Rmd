@@ -231,7 +231,7 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
 }
 
 #Set number of iterations
-N_iter = 500
+N_iter = 1000
 
 #Allocate vectors and arrays 
 u = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
@@ -634,10 +634,10 @@ df70 = data.frame(id = seq(1, length(result_3$summary.random$smoking$mean)),
                   bot025 = result_3$summary.random$smoking$`0.025quant`,
                   top975 = result_3$summary.random$smoking$`0.975quant`)
 
-ggplot() + geom_ribbon(data=df70, aes(x = id, ymin=bot025,ymax=top975)) +
-  geom_line(data=df70, aes(x = id, y = mean, col="mean"), size=2) +
-  geom_line(data=df70, aes(x = id, y = bot025, col="bot025"), size = 2) + 
-  geom_line(data=df70, aes(x = id, y = top975, col="top975"), size=2) + 
+ggplot() + geom_ribbon(data=df70, aes(x = id, ymin=bot025,ymax=top975), alpha=0.50) +
+  geom_line(data=df70, aes(x = id, y = mean, col="mean"), size=1) +
+  geom_line(data=df70, aes(x = id, y = bot025, col="bot025"), size = 1) + 
+  geom_line(data=df70, aes(x = id, y = top975, col="top975"), size=1) + 
   ylab("f(smoking)") + xlab("smoking")
   
 
