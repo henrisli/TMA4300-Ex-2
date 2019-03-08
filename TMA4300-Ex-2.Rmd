@@ -231,7 +231,7 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
 }
 
 #Set number of iterations
-N_iter = 1000
+N_iter = 500
 
 #Allocate vectors and arrays 
 u = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
@@ -408,7 +408,7 @@ gw = geweke.diag(df5)
 cat("zscores:", gw$z, "\n")
 cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
-$p$-values of `r cat(round(2*(1-pnorm(abs(gw$z))),2))` indicate that the chain converges during the first $10\%$ iterations for only component 7 and 424, and not for component 257.
+$p$-values of `r cat(round(2*(1-pnorm(abs(gw$z))),2))` indicate that the chain did converge during the first $10\%$ iterations only for component 7 and 424, and not for component 257.
 
 
 ```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:3eta}Trace plot for three random components of eta"}
@@ -505,12 +505,12 @@ We see from figure \ref{fig:medianexpu} that we have some spatial structure on t
 
 # Exercise 6 (Comparison of INLA and inclusion of covariate information)
 
-```{r, echo=T, eval=T}
-g = system.file("demodata/germany.graph", package="INLA")
-library(INLA)
-```
+## a)
 
 ```{r, echo=T, eval=T}
+library(spam)
+attach(Oral)
+
 # Create a copy of the dataframe Oral
 dfinla = data.frame(Oral)
 dfinla$region = seq(1,length(Oral$Y))
@@ -519,8 +519,15 @@ dfinla$region = seq(1,length(Oral$Y))
 dfinla$region2 = dfinla$region
 ```
 
-
 ```{r, echo=T, eval=T}
+library(INLA)
+g = system.file("demodata/germany.graph", package="INLA")
+
+alpha_u = 1
+beta_u = 0.01
+alpha_v = 1
+beta_v = 0.01
+
 
 # Create kappau prior
 kappauprior = list(prior="loggamma", param=c(alpha_u, beta_u))
@@ -528,44 +535,127 @@ kappauprior = list(prior="loggamma", param=c(alpha_u, beta_u))
 kappavprior = list(prior="loggamma", param=c(alpha_v, beta_v))
 
 # eta = u(region) + v(region)
-# WHY DO WE NEED CONSTR = F HERE
-#formula <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=F) + 
-#            f(region2, model="iid", hyper=list(prec=kappavprior))
-
-formula <- Y~f(dfinla$region,model="besag", graph = g, hyper=list(prec=kappauprior)) + 
-            f(dfinla$region2, model="iid", hyper=list(prec=kappavprior))
+formula <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=T) + 
+            f(region2, model="iid", hyper=list(prec=kappavprior))
 
 
 # Oral$Y = Oral$E * eta
-res <- inla(formula,family="poisson", E = dfinla$E, data=dfinla)
-
-# Look at results
-#res$summary.random$`dfinla|S|region`
-
-res2 = inla.hyperpar(res)
-
-germany.plot(exp(res$summary.random$`dfinla|S|region`$mean), col=col, legend=TRUE)
-germany.plot(post_median_u, col=col, legend=TRUE)
+result <- inla(formula, family="poisson", E = dfinla$E, data=dfinla,
+                 control.compute = list(dic=TRUE))
+result_improved = inla.hyperpar(result)
+```
 
 
-germany.plot( exp(res$summary.random$`dfinla|S|region`$mean) - post_median_u, col=col, legend=TRUE)
+```{r}
+germany.plot(exp(result$summary.random$region$mean) - post_median_u, col=col, legend=TRUE)
 ```
 
 ```{r, echo=T, eval=T}
-exp(res$summary.random$`dfinla|S|region`$mean[random_indexes])
+exp(result$summary.random$region$mean[random_indexes])
 post_median_u[random_indexes]
 ```
 
 ```{r, echo=T, eval=T}
-df60 = data.frame(res2$marginals.hyperpar$`Precision for dfinla|S|region`)
-df61 = data.frame(x = kappau[100:length(kappau)])
 
-ggplot() + geom_histogram(data=df61, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df60, aes(x = x, y = y, col="INLA")) + xlim(0, 40)
+df60 = data.frame(result$marginals.hyperpar$`Precision for region`)
+df61 = data.frame(x = kappau[1000:length(kappau)])
+df62 = data.frame(result_improved$marginals.hyperpar$`Precision for region`)
+
+ggplot() + geom_histogram(data=df61, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df60, aes(x = x, y = y, col="INLA")) + geom_line(data=df62, aes(x = x, y = y, col="INLA - improved")) + xlim(6, 34)
 ```
+
 
 ```{r, echo=T, eval=T}
-df60 = data.frame(res2$marginals.hyperpar$`Precision for dfinla|S|region2`)
-df61 = data.frame(x = kappav[100:length(kappav)])
+df62 = data.frame(result$marginals.hyperpar$`Precision for region2`)
+df63 = data.frame(x = kappav[1000:length(kappav)])
+df64 = data.frame(result_improved$marginals.hyperpar$`Precision for region2`)
 
-ggplot() + geom_histogram(data=df61, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df60, aes(x = x, y = y, col="INLA")) + xlim(0, 500)
+ggplot() + geom_histogram(data=df63, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df62, aes(x = x, y = y, col="INLA")) + geom_line(data=df64, aes(x = x, y = y, col="INLA - improved")) + xlim(40, 500)
 ```
+
+```{r, echo = F, eval = T, out.width = "33%"}
+library(cowplot)
+library(gridExtra)
+
+df650 = data.frame(result$marginals.random$region[index])
+df651 = data.frame(x = u[, index])
+df652 = data.frame(result_improved$marginals.random$region[index])
+  
+colnames(df650) = c("x", "y")
+colnames(df652) = c("x", "y")
+
+index = random_indexes[1]
+p1 = ggplot() + geom_histogram(data=df651, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df650, aes(x = x, y = y, col="INLA")) + geom_line(data=df652, aes(x = x, y = y, col="INLA - improved")) + xlab(paste("u[", index, "]", sep=""))
+
+df660 = data.frame(result$marginals.random$region[index])
+df661 = data.frame(x = u[, index])
+df662 = data.frame(result_improved$marginals.random$region[index])
+  
+colnames(df660) = c("x", "y")
+colnames(df662) = c("x", "y")
+
+index = random_indexes[2]
+p2 = ggplot() + geom_histogram(data=df661, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df660, aes(x = x, y = y, col="INLA")) + geom_line(data=df662, aes(x = x, y = y, col="INLA - improved")) + xlab(paste("u[", index, "]", sep=""))
+
+df670 = data.frame(result$marginals.random$region[index])
+df671 = data.frame(x = u[, index])
+df672 = data.frame(result_improved$marginals.random$region[index])
+  
+colnames(df670) = c("x", "y")
+colnames(df672) = c("x", "y")
+
+index = random_indexes[3]
+p3 = ggplot() + geom_histogram(data=df671, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df670, aes(x = x, y = y, col="INLA")) + geom_line(data=df672, aes(x = x, y = y, col="INLA - improved")) + xlab(paste("u[", index, "]", sep=""))
+
+grid.arrange(p1, p2, p3, nrow=1)
+```
+
+DO THE SAME FOR ETA
+
+## b)
+
+```{r}
+smoking = read.table("smoking.dat")
+dfinla2 = data.frame(dfinla)
+dfinla2$smoking = as.vector(smoking)$V1
+
+formula_2 <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior)) + 
+            f(region2, model="iid", hyper=list(prec=kappavprior)) + 
+            f(smoking, model="linear")
+
+result_2 = inla(formula_2, family="poisson", E = dfinla2$E, data=dfinla2,
+                control.compute = list(dic=TRUE))
+
+formula_3 <-  Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior)) + 
+            f(region2, model="iid", hyper=list(prec=kappavprior)) + 
+            f(smoking, model="rw2")
+
+result_3 <- inla(formula_3, family="poisson", E = dfinla2$E, data=dfinla2,
+                control.compute = list(dic=TRUE))
+
+```
+
+```{r}
+cat("model w/o smoking", result$dic$dic, "\n")
+cat("model w/ smoking", result_2$dic$dic, "\n")
+cat("model w/ smoking RW2", result_3$dic$dic)
+
+```
+
+```{r}
+df70 = data.frame(id = seq(1, length(result_3$summary.random$smoking$mean)),
+                  mean =  result_3$summary.random$smoking$mean,
+                  bot025 = result_3$summary.random$smoking$`0.025quant`,
+                  top975 = result_3$summary.random$smoking$`0.975quant`)
+
+ggplot() + geom_ribbon(data=df70, aes(x = id, ymin=bot025,ymax=top975)) +
+  geom_line(data=df70, aes(x = id, y = mean, col="mean"), size=2) +
+  geom_line(data=df70, aes(x = id, y = bot025, col="bot025"), size = 2) + 
+  geom_line(data=df70, aes(x = id, y = top975, col="top975"), size=2) + 
+  ylab("f(smoking)") + xlab("smoking")
+  
+
+
+
+```
+
