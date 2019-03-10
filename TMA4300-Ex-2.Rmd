@@ -231,7 +231,7 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
 }
 
 #Set number of iterations
-N_iter = 50000
+N_iter = 10000
 
 
 #Allocate vectors and arrays 
@@ -644,7 +644,7 @@ df = rbind(df1, df2, df3)
 df_imp = rbind(df1_imp, df2_imp, df3_imp)
 df_samp = rbind(df1_samp, df2_samp, df3_samp)
 
-ggplot() + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=df_imp, aes(x = x, y = y, col="INLA - improved")) + geom_histogram(data=df_samp, aes(x = x, y = ..density.., col="MCMC"), bins=100) + facet_wrap(~idx) + ylab("density")
+ggplot() + geom_histogram(data=df_samp, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=df_imp, aes(x = x, y = y, col="INLA - improved")) + facet_wrap(~idx) + ylab("density")
 ```
 KOMMENTER LITT OM ETA NÅR VI HAR SIMULERT 50000 GANGER.
 
