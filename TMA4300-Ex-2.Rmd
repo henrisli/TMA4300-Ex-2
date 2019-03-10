@@ -182,7 +182,7 @@ beta_v = 0.01
 
 
 ```{r, echo = T, eval = T}
-set.seed(123)
+set.seed(4300)
 source("dmvnorm.R")
 
 sample_u = function(kappa_v, kappa_u, eta){
@@ -231,8 +231,7 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
 }
 
 #Set number of iterations
-N_iter = 50000
-
+N_iter = 10000
 
 #Allocate vectors and arrays 
 u = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
@@ -299,7 +298,8 @@ We note that the code takes `r round(sum(times))` seconds, or `r round(sum(times
 
 # Exercise 3 (Convergence diagnostics)
 
-We now check a few diagnostic summaries for the precision parameters $\kappa_u$ and $\kappa_v$. We also do the same for three randomly chosen components of $\mathbf{u}$ and $\mathbf{v}$.
+To assess the convergence of our MCMC algorithm we conduct a few diagnostic summaries for the precision parameters $\kappa_u$ and $\kappa_v$ and three randomly chosen components of $\mathbf{u}$ and $\mathbf{v}$.
+
 
 First, we show a trace plot of $\kappa_u$. The values in the burn-in period are really large, so we display both a plot of the whole chain, and a plot where the first 500 values are removed.
 ```{r, echo = T, eval = F, out.width = "70%", fig.align = "center"}
@@ -311,15 +311,15 @@ ggplot(df1, aes(x = N, y = kappa_u)) + geom_point() + facet_wrap(.~type, scales 
 df1 = data.frame(kappa_u = c(kappau, kappau[501:N_iter]), N = c(1:N_iter,501:N_iter), type = c(rep("All iterations",N_iter), rep("First 500 discarded",N_iter-500)))
 ggplot(df1, aes(x = N, y = kappa_u)) + geom_point() + facet_wrap(.~type, scales = "free")
 ```
-From the second plot, we suspect that the burn-in period might be somewhat over 500 iterations.
+From the left plot in figure \ref{fig:tracekappau} we see that the first samples for $\kappa_u$ jump to very high values before settling in the range between $10$ and $40$. This indicates that the burn-in period might be somewhat over 500 iterations.
 
-We then display an autocorrelation plot for $\kappa_u$.
+We display an autocorrelation plot for $\kappa_u$.
 ```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:acfku}Autocorrelation plot for $\\kappa_u$"}
 acf(kappau, lag.max = 60)
 ```
-From the plot, we see that we can use only every $\sim 50$^th^ iteration to get a correlation which is not statistically significant. Taking into account the burn-in period, we would then only get about 1000 uncorrelated samples from our Markov chain of size $N=50000$.
+From the plot in figure \ref{fig:acfku}, we see that we can use only every $\sim 50$^th^ iteration to get a correlation that is not statistically significant. Taking into account the burn-in period, we would then only get about $1000$ uncorrelated samples from our Markov chain of size $N=50000$.
 
-To conclude our diagnosis of the chain for $\kappa_u$, we check the chain for convergence by using the function `geweke.diag()` from the R package `coda`. The function provides a $z$-value, which we use to compute a corresponding $p$-value. Large $p$-values indicates that the chain has converged during the first $10\%$ iterations.
+To conclude our diagnosis of the chain for $\kappa_u$, we check the chain for convergence by using the function `geweke.diag()` from the R package `coda`. The function computes a $z-score$ for the difference in mean between the first $10\%$ and last $50\%$ of the samples. The $z$-score can be used to compute a corresponding $p$-value. Large $p$-values indicate that the chain converged during the first $10\%$ iterations.
 ```{r, echo = T, eval = F}
 gw = geweke.diag(kappau)
 cat("zscores:", gw$z, "\n")
@@ -332,7 +332,7 @@ cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
 A $p$-value of `r round(2*(1-pnorm(abs(gw$z))),2)` indicates that the chain did converge during the first $10\%$ iterations, because this value is above any reasonable significance level.
 
-We then move on to $\kappa_v$, and display both a plot of the whole chain, and a plot where the first 500 values are removed.
+We then move on to $\kappa_v$. As for $\kappa_u$, we display both a plot of the whole chain and a plot where the first 500 values are removed.
 ```{r, echo = T, eval = F, out.width = "70%"}
 df1 = data.frame(kappa_v = c(kappav, kappav[501:N_iter]), N = c(1:N_iter,501:N_iter), type = c(rep("All iterations",N_iter), rep("First 500 discarded",N_iter-500)))
 ggplot(df1, aes(x = N, y = kappa_v)) + geom_point() + facet_wrap(.~type, scales = "free")
@@ -341,7 +341,8 @@ ggplot(df1, aes(x = N, y = kappa_v)) + geom_point() + facet_wrap(.~type, scales 
 df1 = data.frame(kappa_v = c(kappav, kappav[501:N_iter]), N = c(1:N_iter,501:N_iter), type = c(rep("All iterations",N_iter), rep("First 500 discarded",N_iter-500)))
 ggplot(df1, aes(x = N, y = kappa_v)) + geom_point() + facet_wrap(.~type, scales = "free")
 ```
-Also here, we suspect that the burn-in period might be somewhat over 500 iterations.
+
+From the left plot in figure \ref{fig:tracekappav} we see that the samples of $\kappa_v$ remain low for the first iterations before settling in the range between $50$ and $700$. Also here, we suspect that the burn-in period might be somewhat over 500 iterations.
 
 We then display an autocorrelation plot for $\kappa_v$.
 ```{r, echo = T, eval = F, out.width = "50%"}
@@ -349,11 +350,11 @@ acf(kappav)
 acf(kappav, lag.max = 1000)
 ```
 
-```{r, echo = F, eval = T, out.width = "50%"}
+```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:acfkappav}Autocorrelation plots of $\\kappa_v$."}
 acf(kappav)
 acf(kappav, lag.max = 1000)
 ```
-The plot shows that the samples of $\kappa_v$ are highly correlated, which is not ideal.
+From the left plot in figure we see that the correlation between consecutive samples of $\kappa_v$ is very high. From the right plot, we see that the lag between sample $i$ and $i + \text{lag}$ required to get samples that are correlated only a non-significant level is $300$. That the samples of $\kappa_v$ are highly correlated is not ideal, as it will take the MCMC algorithm several iterations to get samples
 
 
 As a final diagnostic for $\kappa_v$ we conduct Geweke's Diagnostic.
@@ -381,7 +382,7 @@ for (i in 1:3){
 }
 ggplot(df4, aes(x = N, y = u, shape = shape, col=col)) + geom_point() + scale_shape(solid=F) + guides(shape = F) + ggtitle("Trace plot for u")
 ```
-The trace plot for three components of $\mathbf{u}$ in figure \ref{fig:3u} looks correct, with a small burn-in period.
+From the trace plots in figure \ref{fig:3u} of the three components of $\mathbf{u}$ we observe only a small burn-in period.
 
 We then plot an autocorrelation plot for the same three components.
 ```{r, echo = T, eval = F, out.width = "33%"}
@@ -421,7 +422,7 @@ for (i in 1:3){
 }
 ggplot(df4, aes(x = N, y = eta, shape = shape, col=col)) + geom_point() + scale_shape(solid=F)+ guides(shape = F) + ggtitle("Trace plot for eta")
 ```
-The trace plot of the three components of $\boldsymbol \eta$ in figure \ref{fig:3eta} looks correct, with a small burn-in period.
+From the trace plots in figure \ref{fig:3eta} of the three components of $\boldsymbol \eta$ we observe only a small burn-in period.
 
 ```{r, echo = T, eval = F}
 df7 = data.frame(eta = eta[,random_indexes])
@@ -516,23 +517,14 @@ g = system.file("demodata/germany.graph", package="INLA")
 Then we use `R-INLA` to compute posterior marginals obtained by INLA for $\kappa_u$, $\kappa_v$ and three ramdomly chosen components of $\mathbf{u}$ and $\boldsymbol \eta$. We can also get improved estimates of the posterior marginals for the precision parameters by applying `inla.hyperpar(result)` on the original INLA result object.
 
 ```{r, echo=T, eval=T}
-library(spam)
+# Create a copy of the dataframe Oral
 attach(Oral)
 
-# Create a copy of the dataframe Oral
-dfinla = data.frame(Oral)
-dfinla$region = seq(1,length(Oral$Y))
-
-# Copy the column region
-dfinla$region2 = dfinla$region
+# Create extra columns for INLA
+Oral$region2 = Oral$region
 ```
 
 ```{r, echo=T, eval=T}
-alpha_u = 1
-beta_u = 0.01
-alpha_v = 1
-beta_v = 0.01
-
 
 # Create kappau prior
 kappauprior = list(prior="loggamma", param=c(alpha_u, beta_u))
@@ -543,9 +535,8 @@ kappavprior = list(prior="loggamma", param=c(alpha_v, beta_v))
 formula <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=T) + 
             f(region2, model="iid", hyper=list(prec=kappavprior))
 
-
 # Oral$Y = Oral$E * eta
-result <- inla(formula, family="poisson", E = dfinla$E, data=dfinla,
+result <- inla(formula, family="poisson", E = Oral$E, data=Oral,
                  control.compute = list(dic=TRUE))
 
 # We can use inla.hyperpar to get improved estimates of the marginals of
@@ -562,13 +553,12 @@ germany.plot(exp(result$summary.random$region$mean) - post_median_u, col=col, le
 ```
 From figure \ref{fig:medianexpucomp}, we see that we generally have small differences between the computed $\exp(\mathbf{u})$ from MCMC and INLA, with some larger outliers.
 
-<!---
 ```{r, echo=T, eval=T}
 exp(result$summary.random$region$mean[random_indexes])
 post_median_u[random_indexes]
 ```
 For our random indices we observe that the estimates of $u$ are close.  
---->
+
 LEGG PÅ CAPTIONS OG DISKUTER FØLGENDE PLOTS.
 ```{r, echo=T, eval=T}
 
