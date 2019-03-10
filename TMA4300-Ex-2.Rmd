@@ -231,7 +231,7 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
 }
 
 #Set number of iterations
-N_iter = 1000
+N_iter = 50000
 
 #Allocate vectors and arrays 
 u = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
@@ -606,6 +606,32 @@ df_samp = rbind(df1_samp, df2_samp, df3_samp)
 ggplot() + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=df_imp, aes(x = x, y = y, col="INLA - improved")) + geom_histogram(data=df_samp, aes(x = x, y = ..density.., col="MCMC"), bins=100) + facet_wrap(~idx) + ylab("density") + xlim(-0.75, 0.75)
 ```
 
+```{r, echo = F, eval = T}
+inla_eta = result$marginals.fitted.values
+inla_eta_improved = result_improved$marginals.fitted.values
+
+index = random_indexes[1]
+df1 = data.frame(inla_eta[index], idx=index); colnames(df1) = c("x", "y", "idx")
+df1_imp = data.frame(inla_eta_improved[index], idx=index); colnames(df1_imp) = c("x", "y", "idx")
+df1_samp = data.frame(x = eta[,index], idx=index)
+
+index = random_indexes[2]
+df2 = data.frame(inla_eta[index], idx=index); colnames(df2) = c("x", "y", "idx")
+df2_imp = data.frame(inla_eta_improved[index], idx=index); colnames(df2_imp) = c("x", "y", "idx")
+df2_samp = data.frame(x = eta[,index], idx=index)
+
+index = random_indexes[3]
+df3 = data.frame(inla_eta[index], idx=index); colnames(df3) = c("x", "y", "idx")
+df3_imp = data.frame(inla_eta_improved[index], idx=index); colnames(df3_imp) = c("x", "y", "idx")
+df3_samp = data.frame(x = eta[,index], idx=index)
+
+df = rbind(df1, df2, df3)
+df_imp = rbind(df1_imp, df2_imp, df3_imp)
+df_samp = rbind(df1_samp, df2_samp, df3_samp)
+
+ggplot() + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=df_imp, aes(x = x, y = y, col="INLA - improved")) + geom_histogram(data=df_samp, aes(x = x, y = ..density.., col="MCMC"), bins=100) + facet_wrap(~idx) + ylab("density")
+```
+
 DO THE SAME FOR ETA
 
 ## b)
@@ -649,9 +675,5 @@ ggplot() + geom_ribbon(data=df70, aes(x = id, ymin=bot025,ymax=top975), alpha=0.
   geom_line(data=df70, aes(x = id, y = bot025, col="bot025"), size = 1) + 
   geom_line(data=df70, aes(x = id, y = top975, col="top975"), size=1) + 
   ylab("f(smoking)") + xlab("smoking")
-  
-
-
-
 ```
 
