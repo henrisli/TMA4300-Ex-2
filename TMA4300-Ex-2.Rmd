@@ -32,7 +32,7 @@ We assume that the observed counts are conditionally independent Poisson
 $$ \lambda_i \lvert \eta_i \sim Poisson(E_i \exp{\eta_i}) $$
 The log relative risk $\boldsymbol{\eta} = (\eta_1, \dots, \eta_n)^T$ is decomposed into
 
-$$ \boldsymbol{\eta} =  \mathbf{u} + \mathbf{v} $$, 
+$$ \boldsymbol{\eta} =  \mathbf{u} + \mathbf{v}, $$ 
 
 where the component $\mathbf{u} = (u_1, \dots, u_n)$ is spatially structured with smoothing parameter $\kappa_u$. The component $\mathbf{v} = (v_1, \dots, v_n)$ is unstructured white noise with precision parameter $\kappa_v$, i.e. $\mathbf{v} \sim N(\mathbf{0}, \kappa_v^{-1} I)$
 
@@ -231,7 +231,8 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
 }
 
 #Set number of iterations
-N_iter = 10000
+N_iter = 50000
+
 
 #Allocate vectors and arrays 
 u = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
@@ -544,6 +545,16 @@ result <- inla(formula, family="poisson", E = Oral$E, data=Oral,
 #  the hyperparameters kappa_u and kappa_v
 result_improved = inla.hyperpar(result)
 ```
+```{r, echo = T, eval = F}
+# We also print time used by INLA:
+cat("Time used by INLA: \n")
+result$cpu.used
+```
+```{r, echo = F, eval = T}
+# We also print time used by INLA:
+cat("Time used by INLA: \n")
+result$cpu.used
+```
 Having obtained the posterior marginals from INLA, we compare these estimates to the one obtained by MCMC, and plot the difference of $\exp(\mathbf{u})$ on the Germany map.
 
 ```{r, echo = T, eval = F, out.width = "50%", fig.align = "center"}
@@ -554,32 +565,38 @@ germany.plot(exp(result$summary.random$region$`0.5quant`) - post_median_u, col=c
 ```
 From figure \ref{fig:medianexpucomp}, we see that we generally have small differences between the computed $\exp(\mathbf{u})$ from MCMC and INLA, with some larger outliers. We observe no negative differences, KOMMENTER DETTE
 
+
 ```{r, echo=T, eval=T}
 exp(result$summary.random$region$`0.5quant`[random_indexes])
 post_median_u[random_indexes]
 ```
 We observe that the MCMC and INLA estimates of selected components of $u$ are close.  
 
-LEGG PÅ CAPTIONS OG DISKUTER FØLGENDE PLOTS.
-```{r, echo=T, eval=T, fig.cap = "\\label{fig:marginals_hyperpar_kappau} The histogram of the MCMC samples in addition to the INLA marginal and improved INLA marginal of $\\kappa_u$."}
+Now, we want to compare histograms of the MCMC-samples and the posterior marginals obtained by INLA for both precision parameters $\kappa_u$ and $\kappa_v$, and the same three randomly chosen components of $\mathbf{u}$ and $\boldsymbol \eta$. We also note that improved estimates of the posterior marginals for the precision parameters can be obtained by applying `inla.hyperpar(result)` on the original INLA results object.
+
+```{r, echo=T, eval=T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:compkappau}Comparison of computed marginal densities by INLA and histogram of MCMC sample for $\\kappa_u$."}
 
 df60 = data.frame(result$marginals.hyperpar$`Precision for region`)
 df61 = data.frame(x = kappau[1000:length(kappau)])
 df62 = data.frame(result_improved$marginals.hyperpar$`Precision for region`)
 
-ggplot() + geom_histogram(data=df61, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df60, aes(x = x, y = y, col="INLA")) + geom_line(data=df62, aes(x = x, y = y, col="INLA - improved")) + xlim(6, 34)
+ggplot() + geom_histogram(data=df61, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df60, aes(x = x, y = y, col="INLA")) + geom_line(data=df62, aes(x = x, y = y, col="INLA - improved")) + xlim(6, 34) + xlab("kappa u")
 ```
+We see from figure \ref{fig:compkappau} that all the three distributions are fairly similar. Still, the improved INLA estimate distribution is closer to the MCMC sample than the original INLA distribution. Also worth noting is that the MCMC sampler uses `r round(sum(times)/60)` minutes, while INLA uses `r cat(round(as.vector(result$cpu.used)[4]),1)` seconds to run. Because they obtain similar posterior marginals, we see that INLA is vastly superior because of the time consumption.
 
 
-```{r, echo=T, eval=T, fig.cap = "\\label{fig:marginals_hyperpar_kappav} The histogram of the MCMC samples in addition to the INLA marginal and improved INLA marginal of $\\kappa_v$."}
+```{r, echo=T, eval=T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:compkappav}Comparison of computed densities by INLA and histogram of MCMC sample for $\\kappa_v$."}
+
 df62 = data.frame(result$marginals.hyperpar$`Precision for region2`)
 df63 = data.frame(x = kappav[1000:length(kappav)])
 df64 = data.frame(result_improved$marginals.hyperpar$`Precision for region2`)
 
-ggplot() + geom_histogram(data=df63, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df62, aes(x = x, y = y, col="INLA")) + geom_line(data=df64, aes(x = x, y = y, col="INLA - improved")) + xlim(40, 500)
+ggplot() + geom_histogram(data=df63, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df62, aes(x = x, y = y, col="INLA")) + geom_line(data=df64, aes(x = x, y = y, col="INLA - improved")) + xlim(40, 550) + xlab("kappa v")
 ```
+Also in figure \ref{fig:compkappav} we see that the three distributions of $\kappa_v$ are fairly similar, with improved INLA closer to the MCMC sample than the original INLA. 
 
-```{r, echo=T, eval=T, fig.cap = "\\label{fig:marginals_u} The histogram of the MCMC samples in addition to the INLA marginal and improved INLA marginal of the selected components of $u$."}
+```{r, echo = T, eval = T, out.width = "70%", fig.align = "center", fig.cap = "\\label{fig:comp3u}Comparison of computed densities by INLA and histogram of MCMC sample for three randomly chosen components of $\\mathbf{u}$."}
+
 index = random_indexes[1]
 df1 = data.frame(result$marginals.random$region[index], idx=index); colnames(df1) = c("x", "y", "idx")
 df1_imp = data.frame(result_improved$marginals.random$region[index], idx=index); colnames(df1_imp) = c("x", "y", "idx")
@@ -599,11 +616,12 @@ df = rbind(df1, df2, df3)
 df_imp = rbind(df1_imp, df2_imp, df3_imp)
 df_samp = rbind(df1_samp, df2_samp, df3_samp)
 
-ggplot() + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=df_imp, aes(x = x, y = y, col="INLA - improved")) + geom_histogram(data=df_samp, aes(x = x, y = ..density.., col="MCMC"), bins=100) + facet_wrap(~idx) + ylab("density") + xlim(-0.75, 0.75)
+ggplot() + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=df_imp, aes(x = x, y = y, col="INLA - improved")) + geom_histogram(data=df_samp, aes(x = x, y = ..density.., col="MCMC"), bins=100) + facet_wrap(~idx) + ylab("density") + xlim(-1, 1)
 ```
+For the three components of $\mathbf{u}$ in figure \ref{fig:comp3u} we see that the improved INLA coincides with the original INLA. Also, the distribution from INLA seems to be shifted somewhat to the right compared to the histogram of the MCMC samples.
 
 
-```{r, echo=T, eval=T, fig.cap = "\\label{fig:marginals_u} The histogram of the MCMC samples in addition to the INLA marginal and improved INLA marginal of the selected components of $\\boldsymbol \\eta$."}
+```{r, echo = T, eval = T, out.width = "70%", fig.align = "center", fig.cap = "\\label{fig:comp3eta}Comparison of computed densities by INLA and histogram of MCMC sample for three randomly chosen components of $\\boldsymbol \\eta$."}
 inla_eta = result$marginals.linear.predictor
 inla_eta_improved = result_improved$marginals.linear.predictor
 
@@ -628,14 +646,17 @@ df_samp = rbind(df1_samp, df2_samp, df3_samp)
 
 ggplot() + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=df_imp, aes(x = x, y = y, col="INLA - improved")) + geom_histogram(data=df_samp, aes(x = x, y = ..density.., col="MCMC"), bins=100) + facet_wrap(~idx) + ylab("density")
 ```
-
+KOMMENTER LITT OM ETA NÅR VI HAR SIMULERT 50000 GANGER.
 
 ## b)
-
-```{r}
+We now want to extend the INLA model formulation to incorporate a smoking covariate. First, we load information about smoking in each region.
+```{r, echo = T, eval = T}
+# Attach smoking to Oral dataset
 smoking = read.table("smoking.dat")
 Oral$smoking = as.vector(smoking)$V1
-
+```
+Then, we make two new models. The first has smoking as a linear effect, and the second has smoking as a non-linear function using random walk of second order. 
+```{r, echo = T, eval = T}
 formula_2 <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=T) + 
             f(region2, model="iid", hyper=list(prec=kappavprior)) + 
             f(smoking, model="linear")
@@ -652,24 +673,33 @@ result_3 <- inla(formula_3, family="poisson", E = Oral$E, data=Oral,
 
 ```
 
-```{r}
-cat("model w/o smoking:", result$dic$dic, "\n")
-cat("model w/  smoking lin:", result_2$dic$dic, "\n")
-cat("model w/  smoking RW2:", result_3$dic$dic)
-
+Then, we compare the two extensions with the original model formulation by using the Deviance Information Criterion (DIC).
+```{r, echo = T, eval = F}
+cat("model without smoking:", result$dic$dic, "\n")
+cat("model with smoking as linear component:", result_2$dic$dic, "\n")
+cat("model with smoking as RW2:", result_3$dic$dic)
 ```
 
-```{r}
+```{r, echo = F, eval = T}
+cat("model without smoking:", result$dic$dic, "\n")
+cat("model with smoking as linear component:", result_2$dic$dic, "\n")
+cat("model with smoking as RW2:", result_3$dic$dic)
+```
+
+We see from the printout that the two models with smoking included have lower DIC than the original model without smoking. Also, the linear and random walk model have almost the same DIC (difference of only 0.002). The DIC is a generalization of the Akaike Information Criterion, which maximizes likelihood while adding a penalty for the number of parameters. The best model is the model with lowest DIC. The models with smoking included have lower DIC values, so we conclude that these models are better than the original.
+
+Finally, we plot the posterior median within $95\%$ credible intervals of the non-linear covariate effect. 
+```{r, echo = T, eval = T, out.width = "70%", fig.align = "center", fig.cap = "\\label{fig:confintsmoking}95$\\%$ credible interval for posterior median of the non-linear covariate effect."}
 df70 = data.frame(id = seq(1, length(result_3$summary.random$smoking$mean)),
                   mean =  result_3$summary.random$smoking$mean,
-                  median = result_3$summary.random$smoking$`0.5quant`,
+                  median =  result_3$summary.random$smoking$`0.5quant`,
                   bot025 = result_3$summary.random$smoking$`0.025quant`,
                   top975 = result_3$summary.random$smoking$`0.975quant`)
 
 ggplot() + geom_ribbon(data=df70, aes(x = id, ymin=bot025,ymax=top975), alpha=0.50) +
-  geom_line(data=df70, aes(x = id, y = median, col="mean"), size=1) +
-  geom_line(data=df70, aes(x = id, y = bot025, col="bot025"), size = 1) + 
-  geom_line(data=df70, aes(x = id, y = top975, col="top975"), size=1) + 
+  geom_line(data=df70, aes(x = id, y = median, col="median"), size=1) +
+  geom_line(data=df70, aes(x = id, y = bot025, col="2.5 percentile"), size = 1) + 
+  geom_line(data=df70, aes(x = id, y = top975, col="97.5 percentile"), size=1) + 
   ylab("f(smoking)") + xlab("smoking")
 ```
 
