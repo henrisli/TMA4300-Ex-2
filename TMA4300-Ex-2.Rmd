@@ -182,7 +182,7 @@ beta_v = 0.01
 
 
 ```{r, echo = T, eval = T}
-set.seed(4300)
+set.seed(123)
 source("dmvnorm.R")
 
 sample_u = function(kappa_v, kappa_u, eta){
@@ -354,7 +354,7 @@ acf(kappav, lag.max = 1000)
 acf(kappav)
 acf(kappav, lag.max = 1000)
 ```
-From the left plot in figure we see that the correlation between consecutive samples of $\kappa_v$ is very high. From the right plot, we see that the lag between sample $i$ and $i + \text{lag}$ required to get samples that are correlated only a non-significant level is $300$. That the samples of $\kappa_v$ are highly correlated is not ideal, as it will take the MCMC algorithm several iterations to get samples
+From the left plot in figure \ref{fig:acfkappav} we see that the correlation between consecutive samples of $\kappa_v$ is very high. From the right plot, we see that the lag between sample $i$ and $i + \text{lag}$ required to get samples that are correlated only a non-significant level is $300$. That the samples of $\kappa_v$ are highly correlated is not ideal, as it will take the MCMC algorithm several iterations to get samples
 
 
 As a final diagnostic for $\kappa_v$ we conduct Geweke's Diagnostic.
@@ -517,8 +517,9 @@ g = system.file("demodata/germany.graph", package="INLA")
 Then we use `R-INLA` to compute posterior marginals obtained by INLA for $\kappa_u$, $\kappa_v$ and three ramdomly chosen components of $\mathbf{u}$ and $\boldsymbol \eta$. We can also get improved estimates of the posterior marginals for the precision parameters by applying `inla.hyperpar(result)` on the original INLA result object.
 
 ```{r, echo=T, eval=T}
-# Create a copy of the dataframe Oral
-attach(Oral)
+
+# Assert that Oral has region column
+Oral$region = seq(1:length(Oral$Y))
 
 # Create extra columns for INLA
 Oral$region2 = Oral$region
@@ -546,21 +547,21 @@ result_improved = inla.hyperpar(result)
 Having obtained the posterior marginals from INLA, we compare these estimates to the one obtained by MCMC, and plot the difference of $\exp(\mathbf{u})$ on the Germany map.
 
 ```{r, echo = T, eval = F, out.width = "50%", fig.align = "center"}
-germany.plot(exp(result$summary.random$region$mean) - post_median_u, col=col, legend=TRUE)
+germany.plot(exp(result$summary.random$region$`0.5quant`) - post_median_u, col=col, legend=TRUE)
 ```
 ```{r, echo = F, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:medianexpucomp} The difference between the MCMC estimate of the posterior median of $\\exp(\\mathbf{u})$ and the INLA estimate of $\\exp(\\mathbf{u})$ for all regions in Germany."}
-germany.plot(exp(result$summary.random$region$mean) - post_median_u, col=col, legend=TRUE)
+germany.plot(exp(result$summary.random$region$`0.5quant`) - post_median_u, col=col, legend=TRUE)
 ```
-From figure \ref{fig:medianexpucomp}, we see that we generally have small differences between the computed $\exp(\mathbf{u})$ from MCMC and INLA, with some larger outliers.
+From figure \ref{fig:medianexpucomp}, we see that we generally have small differences between the computed $\exp(\mathbf{u})$ from MCMC and INLA, with some larger outliers. We observe no negative differences, KOMMENTER DETTE
 
 ```{r, echo=T, eval=T}
-exp(result$summary.random$region$mean[random_indexes])
+exp(result$summary.random$region$`0.5quant`[random_indexes])
 post_median_u[random_indexes]
 ```
-For our random indices we observe that the estimates of $u$ are close.  
+We observe that the MCMC and INLA estimates of selected components of $u$ are close.  
 
 LEGG PÅ CAPTIONS OG DISKUTER FØLGENDE PLOTS.
-```{r, echo=T, eval=T}
+```{r, echo=T, eval=T, fig.cap = "\\label{fig:marginals_hyperpar_kappau} The histogram of the MCMC samples in addition to the INLA marginal and improved INLA marginal of $\\kappa_u$."}
 
 df60 = data.frame(result$marginals.hyperpar$`Precision for region`)
 df61 = data.frame(x = kappau[1000:length(kappau)])
@@ -570,7 +571,7 @@ ggplot() + geom_histogram(data=df61, aes(x = x, y = ..density.., col="MCMC"), bi
 ```
 
 
-```{r, echo=T, eval=T}
+```{r, echo=T, eval=T, fig.cap = "\\label{fig:marginals_hyperpar_kappav} The histogram of the MCMC samples in addition to the INLA marginal and improved INLA marginal of $\\kappa_v$."}
 df62 = data.frame(result$marginals.hyperpar$`Precision for region2`)
 df63 = data.frame(x = kappav[1000:length(kappav)])
 df64 = data.frame(result_improved$marginals.hyperpar$`Precision for region2`)
@@ -578,7 +579,7 @@ df64 = data.frame(result_improved$marginals.hyperpar$`Precision for region2`)
 ggplot() + geom_histogram(data=df63, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df62, aes(x = x, y = y, col="INLA")) + geom_line(data=df64, aes(x = x, y = y, col="INLA - improved")) + xlim(40, 500)
 ```
 
-```{r, echo = F, eval = T}
+```{r, echo=T, eval=T, fig.cap = "\\label{fig:marginals_u} The histogram of the MCMC samples in addition to the INLA marginal and improved INLA marginal of the selected components of $u$."}
 index = random_indexes[1]
 df1 = data.frame(result$marginals.random$region[index], idx=index); colnames(df1) = c("x", "y", "idx")
 df1_imp = data.frame(result_improved$marginals.random$region[index], idx=index); colnames(df1_imp) = c("x", "y", "idx")
@@ -602,7 +603,7 @@ ggplot() + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=d
 ```
 
 
-```{r, echo = F, eval = T}
+```{r, echo=T, eval=T, fig.cap = "\\label{fig:marginals_u} The histogram of the MCMC samples in addition to the INLA marginal and improved INLA marginal of the selected components of $\\boldsymbol \\eta$."}
 inla_eta = result$marginals.fitted.values
 inla_eta_improved = result_improved$marginals.fitted.values
 
@@ -633,21 +634,20 @@ ggplot() + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=d
 
 ```{r}
 smoking = read.table("smoking.dat")
-dfinla2 = data.frame(dfinla)
-dfinla2$smoking = as.vector(smoking)$V1
+Oral$smoking = as.vector(smoking)$V1
 
-formula_2 <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior)) + 
+formula_2 <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=T) + 
             f(region2, model="iid", hyper=list(prec=kappavprior)) + 
             f(smoking, model="linear")
 
-result_2 = inla(formula_2, family="poisson", E = dfinla2$E, data=dfinla2,
+result_2 = inla(formula_2, family="poisson", E = Oral$E, data=Oral,
                 control.compute = list(dic=TRUE))
 
-formula_3 <-  Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior)) + 
+formula_3 <-  Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=T) + 
             f(region2, model="iid", hyper=list(prec=kappavprior)) + 
             f(smoking, model="rw2")
 
-result_3 <- inla(formula_3, family="poisson", E = dfinla2$E, data=dfinla2,
+result_3 <- inla(formula_3, family="poisson", E = Oral$E, data=Oral,
                 control.compute = list(dic=TRUE))
 
 ```
@@ -662,11 +662,12 @@ cat("model w/  smoking RW2:", result_3$dic$dic)
 ```{r}
 df70 = data.frame(id = seq(1, length(result_3$summary.random$smoking$mean)),
                   mean =  result_3$summary.random$smoking$mean,
+                  median = result_3$summary.random$smoking$`0.5quant`,
                   bot025 = result_3$summary.random$smoking$`0.025quant`,
                   top975 = result_3$summary.random$smoking$`0.975quant`)
 
 ggplot() + geom_ribbon(data=df70, aes(x = id, ymin=bot025,ymax=top975), alpha=0.50) +
-  geom_line(data=df70, aes(x = id, y = mean, col="mean"), size=1) +
+  geom_line(data=df70, aes(x = id, y = median, col="mean"), size=1) +
   geom_line(data=df70, aes(x = id, y = bot025, col="bot025"), size = 1) + 
   geom_line(data=df70, aes(x = id, y = top975, col="top975"), size=1) + 
   ylab("f(smoking)") + xlab("smoking")
