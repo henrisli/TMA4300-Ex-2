@@ -604,8 +604,8 @@ ggplot() + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=d
 
 
 ```{r, echo=T, eval=T, fig.cap = "\\label{fig:marginals_u} The histogram of the MCMC samples in addition to the INLA marginal and improved INLA marginal of the selected components of $\\boldsymbol \\eta$."}
-inla_eta = result$marginals.fitted.values
-inla_eta_improved = result_improved$marginals.fitted.values
+inla_eta = result$marginals.linear.predictor
+inla_eta_improved = result_improved$marginals.linear.predictor
 
 index = random_indexes[1]
 df1 = data.frame(inla_eta[index], idx=index); colnames(df1) = c("x", "y", "idx")
