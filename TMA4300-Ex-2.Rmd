@@ -688,12 +688,12 @@ We see from the printout that the two models with smoking included have lower DI
 Finally, we plot the posterior median within $95\%$ credible intervals of the non-linear covariate effect. 
 ```{r, echo = T, eval = T, out.width = "70%", fig.align = "center", fig.cap = "\\label{fig:confintsmoking}95$\\%$ credible interval for posterior median of the non-linear covariate effect."}
 df70 = data.frame(id = seq(1, length(result_3$summary.random$smoking$mean)),
-                  mean =  result_3$summary.random$smoking$mean,
+                  median =  result_3$summary.random$smoking$`0.5quant`,
                   bot025 = result_3$summary.random$smoking$`0.025quant`,
                   top975 = result_3$summary.random$smoking$`0.975quant`)
 
 ggplot() + geom_ribbon(data=df70, aes(x = id, ymin=bot025,ymax=top975), alpha=0.50) +
-  geom_line(data=df70, aes(x = id, y = mean, col="mean"), size=1) +
+  geom_line(data=df70, aes(x = id, y = median, col="median"), size=1) +
   geom_line(data=df70, aes(x = id, y = bot025, col="2.5 percentile"), size = 1) + 
   geom_line(data=df70, aes(x = id, y = top975, col="97.5 percentile"), size=1) + 
   ylab("f(smoking)") + xlab("smoking")
