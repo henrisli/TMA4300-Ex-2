@@ -234,7 +234,7 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
 }
 
 #Set number of iterations
-N_iter = 1500
+N_iter = 50000
 
 #Allocate vectors and arrays 
 u = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
@@ -491,15 +491,9 @@ To improve the ESS of our MCMC algorithm we need to decrease the autocorrelation
 
 It could also be considered to use a more sophisticated approximation of the posterior marginal density of $\boldsymbol \eta$. However, we observe from figure \ref{fig:accept} that the observed acceptance probabilities used for sampling $\boldsymbol \eta$, except for the burn-in period, are reasonably high. 
 
-```{r, echo = T, eval = F}
+```{r, echo = T, eval = T, out.width = "50%", fig.align="center", fig.cap = "\\label{fig:accept}Acceptance probabilities for sampling $\\boldsymbol \\eta$."}
 df90 = data.frame(alpha = accept_prob, N = seq(1, N_iter))
-ggplot(df90, aes(x = N, y = alpha, col="acceptance probability")) + geom_line() +geom_smooth(aes(col = "loess approximation"), method="loess", level=0) + ylab("acceptance probability, r")
-```
-
-
-```{r, echo = F, eval = T, out.width = "50%", fig.align="center", fig.cap = "\\label{fig:accept}Acceptance probabilities for sampling $\\boldsymbol \\eta$."}
-df90 = data.frame(alpha = accept_prob, N = seq(1, N_iter))
-ggplot(df90, aes(x = N, y = alpha, col="acceptance probability")) + geom_line() +geom_smooth(aes(col = "loess approximation"), method="loess") + ylab("r")
+ggplot(df90, aes(x = N, y = alpha, col="acceptance probability")) + geom_line() +geom_smooth(aes(col = "smooth approx")) + ylab("r")
 ```
 
 We also compute the relative ESS, which is the ESS divided by the running time of the MCMC algorithm. The relative ESS can be interpreted as a measure for the number of independent samples produced by the algorithm per second. We get the following values for the relative ESS of $\kappa_u$ and $\kappa_v$.
@@ -585,7 +579,6 @@ cat("Time used by INLA: \n")
 result$cpu.used
 ```
 Having obtained the posterior marginals from INLA, we compare these estimates to the one obtained by MCMC, and plot the difference of $\exp(\mathbf{u})$ on the map of Germany.
-
 
 ```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:medianexpucomp} The difference between the MCMC estimate of the posterior median of $\\exp(\\mathbf{u})$ and the INLA estimate of $\\exp(\\mathbf{u})$ for all regions in Germany."}
 germany.plot(exp(result$summary.random$region$`0.5quant`) - post_median_u, col=col, legend=TRUE)
