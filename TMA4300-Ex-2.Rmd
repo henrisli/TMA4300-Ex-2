@@ -4,10 +4,6 @@ output:
   pdf_document:
     toc: no
     toc_depth: '2'
-  html_document:
-    toc: yes
-    toc_depth: 2
-    toc_float: yes
 date: "`r format(Sys.time(), '%d.%m.%Y')`"
 subtitle: 'Group members: Henrik Syversveen Lie, Mikal Solberg Stapnes'
 header-includes: \usepackage{float}
@@ -240,7 +236,6 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
 #Set number of iterations
 N_iter = 50000
 
-
 #Allocate vectors and arrays 
 u = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
 eta = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
@@ -366,7 +361,7 @@ acf(kappav, lag.max = 50)
 acf(kappav, lag.max = 1000)
 ```
 
-From the plot in figure \ref{fig:acfkappav} we see that the correlation between consecutive samples of $\kappa_v$ is very high. From We observe that the lag required to get non-significant autocorrelation is several hundred. That the samples of $\kappa_v$ are highly correlated is not ideal, as it will take the MCMC algorithm several iterations to generate the equivalent of an independent sample. 
+From the plot in figure \ref{fig:acfkappav1} we see that the correlation between consecutive samples of $\kappa_v$ is very high. From the plot in figure \ref{fig:acfkappav2}, we observe that the lag required to get non-significant autocorrelation is several hundred. The samples of $\kappa_v$ being highly correlated is not ideal, as it will take the MCMC algorithm several iterations to generate the equivalent of an independent sample. 
 
 
 As a final diagnostic for $\kappa_v$ we conduct Geweke's Diagnostic.
@@ -382,7 +377,7 @@ cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
 A $p$-value of `r round(2*(1-pnorm(abs(gw$z))),2)` indicates that the chain converged during the first $10\%$ iterations.
 
-We then draw three random components of $\mathbf{u}$ and $\mathbf{v]$ and plot trace plots, autocorrelation functions and use the function `geweke.diag()` to check for convergence.
+We then draw three random components of $\mathbf{u}$ and $\mathbf{v}$ and plot trace plots, autocorrelation functions and use the function `geweke.diag()` to check for convergence.
 ```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:3u}Trace plot for three random components of $\\mathbf{u}$."}
 set.seed(123)
 random_indexes = sort(sample(1:length(Oral$Y), 3, replace=F))
@@ -597,7 +592,7 @@ germany.plot(exp(result$summary.random$region$`0.5quant`) - post_median_u, col=c
 ```
 From figure \ref{fig:medianexpucomp}, we see that we have reasonably small differences between the computed $\exp(\mathbf{u})$ from MCMC and INLA, with some larger outliers. However, we observe no negative differences, indicating that INLA might overestimate the effect of the spatial field $\mathbf{u}$.  
 
-Now, we want to compare histograms of the MCMC-samples and the posterior marginals obtained by INLA for both precision parameters $\kappa_u$ and $\kappa_v$, and the same for the three randomly chosen components of $\mathbf{u}$ and $\boldsymbol \eta$. We also note that improved estimates of the posterior marginals for the precision parameters can be obtained by applying `inla.hyperpar(result)` on the original INLA results object.
+Now, we want to compare histograms of the MCMC-samples and the posterior marginals obtained by INLA for both precision parameters $\kappa_u$ and $\kappa_v$, and the same for the three randomly chosen components of $\mathbf{u}$ and $\mathbf{v}$. We also note that improved estimates of the posterior marginals for the precision parameters can be obtained by applying `inla.hyperpar(result)` on the original INLA results object.
 
 ```{r, echo=T, eval=T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:compkappau}Comparison of computed marginal densities by INLA and histogram of MCMC sample for $\\kappa_u$."}
 
@@ -744,7 +739,7 @@ cat("model with smoking as RW2:", result_3$dic$dic)
 cat("model without smoking:", result$dic$dic, "\n")
 cat("model with smoking as linear component:", result_2$dic$dic, "\n")
 cat("model with smoking as RW2:", result_3$dic$dic)
-difference = result_2$dic$dic-result_3$dic$dic
+difference = round(result_2$dic$dic-result_3$dic$dic,3)
 ```
 
 We see from the printout that the two models with smoking included have lower DIC than the original model without smoking. Also, the linear and random walk model have almost the same DIC (difference of only `r difference`). The DIC is a generalization of the Akaike Information Criterion, which maximizes likelihood while adding a penalty for the number of parameters. The best model is the model with lowest DIC. We observe that the inclusion of smoking in the model produces a reduction in loglikelihood that outweighs the parameter penalty, and can thus conclude that these models are better than the original. 
