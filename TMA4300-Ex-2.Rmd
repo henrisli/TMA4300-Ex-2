@@ -234,7 +234,7 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
 }
 
 #Set number of iterations
-N_iter = 50000
+N_iter = 1500
 
 #Allocate vectors and arrays 
 u = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
@@ -409,7 +409,7 @@ acf(u[,random_indexes[2]], lag.max = 200, main = paste0("ACF of u[",random_index
 acf(u[,random_indexes[3]], lag.max = 200, main = paste0("ACF of u[",random_indexes[3],"]"))
 ```
 
-From figure \ref{fig:acfu} we see that the three components of $\mathbf{u}$ show varying degree of autocorrelation. It takes roughly $50$ iterations to reduce the autocorrelation of the three components to non-significance. Even so, the components are less correlated than $\kappa_v$.
+From figure \ref{fig:acfu1}-\ref{fig:acfu3} we see that the three components of $\mathbf{u}$ show varying degree of autocorrelation. It takes roughly $50$ iterations to reduce the autocorrelation of the three components to non-significance. Even so, the components are less correlated than $\kappa_v$.
 
 As a final diagnostic, we conduct Geweke's Diagnostic to the three components.
 ```{r, echo = T, eval = F}
@@ -584,15 +584,15 @@ result$cpu.used
 cat("Time used by INLA: \n")
 result$cpu.used
 ```
-Having obtained the posterior marginals from INLA, we compare these estimates to the one obtained by MCMC, and plot the difference of $\exp(\mathbf{u})$ on the Germany map.
+Having obtained the posterior marginals from INLA, we compare these estimates to the one obtained by MCMC, and plot the difference of $\exp(\mathbf{u})$ on the map of Germany.
 
 
 ```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:medianexpucomp} The difference between the MCMC estimate of the posterior median of $\\exp(\\mathbf{u})$ and the INLA estimate of $\\exp(\\mathbf{u})$ for all regions in Germany."}
 germany.plot(exp(result$summary.random$region$`0.5quant`) - post_median_u, col=col, legend=TRUE)
 ```
-From figure \ref{fig:medianexpucomp}, we see that we have reasonably small differences between the computed $\exp(\mathbf{u})$ from MCMC and INLA, with some larger outliers. However, we observe no negative differences, indicating that INLA might overestimate the effect of the spatial field $\mathbf{u}$.  
+From figure \ref{fig:medianexpucomp}, we see that we have reasonably small differences between the computed $\exp(\mathbf{u})$ from MCMC and INLA, with some larger outliers. However, we observe no negative differences, indicating that INLA might overestimate the effect of the spatial effect $\mathbf{u}$.  
 
-Now, we want to compare histograms of the MCMC-samples and the posterior marginals obtained by INLA for both precision parameters $\kappa_u$ and $\kappa_v$, and the same for the three randomly chosen components of $\mathbf{u}$ and $\mathbf{v}$. We also note that improved estimates of the posterior marginals for the precision parameters can be obtained by applying `inla.hyperpar(result)` on the original INLA results object.
+Now, we want to compare histograms of the MCMC-samples and the posterior marginals obtained by INLA for both precision parameters $\kappa_u$ and $\kappa_v$, and the same for the three randomly chosen components of $\mathbf{u}$ and $\mathbf{v}$. We note that improved estimates of the posterior marginals for the precision parameters can be obtained by applying `inla.hyperpar(result)` on the original INLA results object.
 
 ```{r, echo=T, eval=T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:compkappau}Comparison of computed marginal densities by INLA and histogram of MCMC sample for $\\kappa_u$."}
 
@@ -615,9 +615,7 @@ ggplot() + geom_histogram(data=df63, aes(x = x, y = ..density.., col="MCMC"), bi
 Also in figure \ref{fig:compkappav} we see that the three distributions of $\kappa_v$ are fairly similar, with improved INLA closer to the MCMC sample than the original INLA. 
 
 
-
 ```{r, echo = T, eval = T, out.width = "70%", fig.align = "center", fig.cap = "\\label{fig:comp3u}Comparison of computed densities by INLA and histogram of MCMC sample for three randomly chosen components of $\\mathbf{u}$."}
-
 index = random_indexes[1]
 df1 = data.frame(result$marginals.random$region[index], idx=index); colnames(df1) = c("x", "y", "idx")
 df1_imp = data.frame(result_improved$marginals.random$region[index], idx=index); colnames(df1_imp) = c("x", "y", "idx")
@@ -639,7 +637,7 @@ df_samp = rbind(df1_samp, df2_samp, df3_samp)
 
 ggplot() + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=df_imp, aes(x = x, y = y, col="INLA - improved")) + geom_histogram(data=df_samp, aes(x = x, y = ..density.., col="MCMC"), bins=100) + facet_wrap(~idx) + ylab("density") + xlim(-1, 1)
 ```
-For the three components of $\mathbf{u}$ in figure \ref{fig:comp3u} we see that the improved INLA coincides with the original INLA. Also, the distribution from INLA seems to be shifted somewhat to the right compared to the histogram of the MCMC samples, indicating that INLA might overestimate the effect of the spatial parameters $\mathbf{u}$.
+For the three components of $\mathbf{u}$ in figure \ref{fig:comp3u} we see that the improved INLA marginals coincide with the original INLA marginals. The INLA marginals seem to be somewhat positively shifted compared to the histogram of the MCMC samples, indicating that INLA may overestimate the effect of the spatial effect $\mathbf{u}$.
 
 ```{r, echo = T, eval = T, out.width = "70%", fig.align = "center", fig.cap = "\\label{fig:comp3v}Comparison of computed densities by INLA and histogram of MCMC sample for three randomly chosen components of $\\mathbf{v}$."}
 inla_v = result$marginals.random$region2
@@ -666,7 +664,7 @@ df_samp = rbind(df1_samp, df2_samp, df3_samp)
 
 ggplot() + geom_histogram(data=df_samp, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=df_imp, aes(x = x, y = y, col="INLA - improved")) + facet_wrap(~idx) + ylab("density")
 ```
-For the three components of $\mathbf{v}$ in figure \ref{fig:comp3v} we see that the improved INLA coincides with the original INLA. Also, the marginal densities from INLA perfectly coincides with the histograms of the MCMC samples.
+For the three components of $\mathbf{v}$ in figure \ref{fig:comp3v} we see that the improved INLA coincides with the original INLA. Also, the marginal densities from INLA coincide with the histograms of the MCMC samples.
 
 ```{r, echo = T, eval = T, out.width = "70%", fig.align = "center", fig.cap = "\\label{fig:comp3eta}Comparison of computed densities by INLA and histogram of MCMC sample for three randomly chosen components of $\\boldsymbol \\eta$."}
 inla_eta = result$marginals.linear.predictor
@@ -693,13 +691,12 @@ df_samp = rbind(df1_samp, df2_samp, df3_samp)
 
 ggplot() + geom_histogram(data=df_samp, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=df_imp, aes(x = x, y = y, col="INLA - improved")) + facet_wrap(~idx) + ylab("density")
 ```
-
-We note that even though INLA gives somewhat different estimates for $\mathbf{u}$, the INLA marginals of the three components of $\boldsymbol \eta = \mathbf{u} + \mathbf{v}$ perfectly overlaps with the MCMC histogram, see figure \ref{fig:comp3eta}.
+We note that even though INLA gives positively shifted estimates for $\mathbf{u}$, the INLA marginals of the three components of $\boldsymbol \eta = \mathbf{u} + \mathbf{v}$ perfectly overlap with the MCMC histograms, see figure \ref{fig:comp3eta}.
 
 ```{r, echo = F, eval = T}
 INLA.time = round(result$cpu.used[4],1)
 ```
-We note that INLA and MCMC in general produce results that are at least qualitatively comparable. For $\kappa_u$, $\kappa_v$ and $\eta$, the resulting marginal densities perfectly overlap. For the spatial effect $\mathbf{u}$ we observe some difference. Also worth noting is that the MCMC sampler uses `r round(sum(times)/60)` minutes, while INLA uses `r INLA.time` seconds to run. Because they yield very similar results, we see that INLA is vastly superior time consumption is a significant restriction. 
+In general, INLA and MCMC produce results that are at least qualitatively comparable. For $\kappa_u$, $\kappa_v$ and $\boldsymbol \eta$, the resulting marginal densities perfectly overlap. For the spatial effect $\mathbf{u}$ we observe some positive shift in the INLA estimate.  Worth noting is that the MCMC sampler uses `r round(sum(times)/60)` minutes, while INLA uses `r INLA.time` seconds to run. Because they yield very similar results, we see that INLA is vastly superior if time consumption is a significant restriction. 
 
 ## b)
 We now want to extend the INLA model formulation to incorporate a smoking covariate. First, we load information about smoking in each region.
@@ -728,7 +725,7 @@ result_3 <- inla(formula_3, family="poisson", E = Oral$E, data=Oral,
 
 ```
 
-Then, we compare the two extensions with the original model formulation by using the Deviance Information Criterion (DIC).
+We then compare the two extensions with the original model formulation by using the Deviance Information Criterion (DIC).
 ```{r, echo = T, eval = F}
 cat("model without smoking:", result$dic$dic, "\n")
 cat("model with smoking as linear component:", result_2$dic$dic, "\n")
@@ -741,13 +738,11 @@ cat("model with smoking as linear component:", result_2$dic$dic, "\n")
 cat("model with smoking as RW2:", result_3$dic$dic)
 difference = round(result_2$dic$dic-result_3$dic$dic,3)
 ```
-
 We see from the printout that the two models with smoking included have lower DIC than the original model without smoking. Also, the linear and random walk model have almost the same DIC (difference of only `r difference`). The DIC is a generalization of the Akaike Information Criterion, which maximizes likelihood while adding a penalty for the number of parameters. The best model is the model with lowest DIC. We observe that the inclusion of smoking in the model produces a reduction in loglikelihood that outweighs the parameter penalty, and can thus conclude that these models are better than the original. 
 
 However, we saw that the reduction for the random walk model and linear model were nearly equal. This means that between the flexible random-walk model and the somewhat rigid linear model, the reduction in loglikelihood permitted by the random-walk model is outweighed by the penalty on the number of parameters introduced. Thus, using DIC, we can argue that the linear and random-walk models are approximately equally good. 
 
 Finally, we plot the posterior median within $95\%$ credible intervals of the non-linear covariate effect. 
-
 ```{r, echo = T, eval = T, out.width = "70%", fig.align = "center", fig.cap = "\\label{fig:confintsmoking} 95$\\%$ Credible interval for posterior median of the non-linear covariate effect."}
 
 df70 = data.frame(id = seq(1, length(result_3$summary.random$smoking$mean)),
@@ -762,7 +757,5 @@ ggplot() + geom_ribbon(data=df70, aes(x = id, ymin=bot025,ymax=top975), alpha=0.
   geom_line(data=df70, aes(x = id, y = top975, col="97.5 percentile"), size=1) + 
   ylab("f(smoking)") + xlab("smoking")
 ```
-
-
 We observe that the credible interval for the random walk model does not contain the zero-hypothesis for all values of smoking but is very large. We also see that the credible interval of the random-walk smoking parameter is approximately linear. Comparing this with the DIC values for the two models we may hypothesize that the random-walk model will tend towards the linear model and that the true relationship is highly linear. In any case, the inclusion of smoking in the model yields a better model.
 
