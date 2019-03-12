@@ -707,9 +707,10 @@ cat("model with smoking as RW2:", result_3$dic$dic)
 cat("model without smoking:", result$dic$dic, "\n")
 cat("model with smoking as linear component:", result_2$dic$dic, "\n")
 cat("model with smoking as RW2:", result_3$dic$dic)
+difference = result_2$dic$dic-result_3$dic$dic
 ```
 
-We see from the printout that the two models with smoking included have lower DIC than the original model without smoking. Also, the linear and random walk model have almost the same DIC (difference of only 0.002). The DIC is a generalization of the Akaike Information Criterion, which maximizes likelihood while adding a penalty for the number of parameters. The best model is the model with lowest DIC. The models with smoking included have lower DIC values, so we conclude that these models are better than the original. 
+We see from the printout that the two models with smoking included have lower DIC than the original model without smoking. Also, the linear and random walk model have almost the same DIC (difference of only `r difference`). The DIC is a generalization of the Akaike Information Criterion, which maximizes likelihood while adding a penalty for the number of parameters. The best model is the model with lowest DIC. The models with smoking included have lower DIC values, so we conclude that these models are better than the original. 
 
 Finally, we plot the posterior median within $95\%$ credible intervals of the non-linear covariate effect. 
 ```{r, echo = T, eval = T, out.width = "70%", fig.align = "center", fig.cap = "\\label{fig:confintsmoking}95$\\%$ Credible interval for posterior median of the non-linear covariate effect."}
