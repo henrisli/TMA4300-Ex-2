@@ -327,7 +327,7 @@ acf(kappau, lag.max = 60)
 ```
 From the plot in figure \ref{fig:acfku}, we see that we can use only every $\sim 50$^th^ iteration to get a correlation that is not statistically significant. Taking into account the burn-in period, we would then only get about $1000$ uncorrelated samples from our Markov chain of size $N=50000$.
 
-To conclude our analysis of the chain for $\kappa_u$, we check the chain for convergence by using the function `geweke.diag()` from the R package `coda`. The function computes a $z-score$ for the difference in mean between the first $10\%$ and last $50\%$ of the samples. The $z$-score can be used to compute a corresponding $p$-value. Large $p$-values indicate that the chain converged during the first $10\%$ iterations. It could be reasonable to remove the burn-in period before using Geweke's diagnostic test, but we have chosen not to do this. Thus our results from conducting Geweke's diagnostic may be too pessimistic. 
+To conclude our analysis of the chain for $\kappa_u$, we check the chain for convergence by using the function `geweke.diag()` from the R package `coda`. The function computes a $z-score$ for the difference in mean between the first $10\%$ and last $50\%$ of the samples. The $z$-score can be used to compute a corresponding $p$-value. Large $p$-values indicate that the chain converged during the first $10\%$ iterations. It could be reasonable to remove the burn-in period before using Geweke's diagnostic test, but we have chosen not to do this. Therefore our results from conducting Geweke's diagnostic may be too pessimistic. 
 
 ```{r, echo = T, eval = F}
 gw = geweke.diag(kappau)
@@ -365,11 +365,8 @@ acf(kappav, lag.max = 50)
 ```{r, echo = F, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:acfkappav2}Autocorrelation plot of $\\kappa_v$ with max lag of 1000."}
 acf(kappav, lag.max = 1000)
 ```
-<<<<<<< HEAD
+
 From the plot in figure \ref{fig:acfkappav} we see that the correlation between consecutive samples of $\kappa_v$ is very high. From We observe that the lag required to get non-significant autocorrelation is several hundred. That the samples of $\kappa_v$ are highly correlated is not ideal, as it will take the MCMC algorithm several iterations to generate the equivalent of an independent sample. 
-=======
-From the plot in figure \ref{fig:acfkappav1} we see that the correlation between consecutive samples of $\kappa_v$ is very high. From the plot in figure \ref{fig:afckappav2}, we see that the lag between sample $i$ and $i + \text{lag}$ required to get samples that are correlated only a non-significant level is $300$. That the samples of $\kappa_v$ are highly correlated is not ideal, as it will take the MCMC algorithm several iterations to get samples
->>>>>>> 0d485dab8aba46e4ccfed5986e499385562a8f11
 
 
 As a final diagnostic for $\kappa_v$ we conduct Geweke's Diagnostic.
@@ -680,7 +677,6 @@ For the three components of $\boldsymbol \eta$ in figure \ref{fig:comp3eta} we s
 INLA.time = round(result$cpu.used[4],1)
 ```
 We note that INLA and MCMC in general produce results that are at least qualitatively comparable. For $\kappa_u$, $\kappa_v$ and $\eta$, the resulting marginal densities perfectly overlap. For the spatial effect $\mathbf{u}$ we observe some difference. Also worth noting is that the MCMC sampler uses `r round(sum(times)/60)` minutes, while INLA uses `r INLA.time` seconds to run. Because they yield very similar results, we see that INLA is vastly superior time consumption is a significant restriction. 
-
 
 ## b)
 We now want to extend the INLA model formulation to incorporate a smoking covariate. First, we load information about smoking in each region.
