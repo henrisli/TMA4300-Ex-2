@@ -592,7 +592,7 @@ germany.plot(exp(result$summary.random$region$`0.5quant`) - post_median_u, col=c
 ```
 From figure \ref{fig:medianexpucomp}, we see that we have reasonably small differences between the computed $\exp(\mathbf{u})$ from MCMC and INLA, with some larger outliers. However, we observe no negative differences, indicating that INLA might overestimate the effect of the spatial field $\mathbf{u}$.  
 
-Now, we want to compare histograms of the MCMC-samples and the posterior marginals obtained by INLA for both precision parameters $\kappa_u$ and $\kappa_v$, and the same for the three randomly chosen components of $\mathbf{u}$ and $\boldsymbol \eta$. We also note that improved estimates of the posterior marginals for the precision parameters can be obtained by applying `inla.hyperpar(result)` on the original INLA results object.
+Now, we want to compare histograms of the MCMC-samples and the posterior marginals obtained by INLA for both precision parameters $\kappa_u$ and $\kappa_v$, and the same for the three randomly chosen components of $\mathbf{u}$ and $\mathbf{v}$. We also note that improved estimates of the posterior marginals for the precision parameters can be obtained by applying `inla.hyperpar(result)` on the original INLA results object.
 
 ```{r, echo=T, eval=T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:compkappau}Comparison of computed marginal densities by INLA and histogram of MCMC sample for $\\kappa_u$."}
 
