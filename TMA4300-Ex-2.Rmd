@@ -382,7 +382,7 @@ cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
 A $p$-value of `r round(2*(1-pnorm(abs(gw$z))),2)` indicates that the chain converged during the first $10\%$ iterations.
 
-We then draw three random components of $\mathbf{u}$ and $\boldsymbol \eta$ and plot trace plots, autocorrelation functions and use the function `geweke.diag()` to check for convergence.
+We then draw three random components of $\mathbf{u}$ and $\mathbf{v]$ and plot trace plots, autocorrelation functions and use the function `geweke.diag()` to check for convergence.
 ```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:3u}Trace plot for three random components of $\\mathbf{u}$."}
 set.seed(123)
 random_indexes = sort(sample(1:length(Oral$Y), 3, replace=F))
@@ -430,49 +430,52 @@ cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 $p$-values of 0.41, 0.10 and 0.89 indicate that the chain did converge during the first $10\%$ iterations only for all the three components in consideration.
 
 
-```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:3eta}Trace plot for three random components of $\\boldsymbol \\eta$."}
+```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:3v}Trace plot for three random components of $\\mathbf{v}$."}
 df4 = data.frame()
 for (i in 1:3){
   index = random_indexes[i]
-  df = data.frame(eta = eta[, index], N = 1:N_iter, shape = as.factor(i), col=as.factor(index))
+  df = data.frame(v = eta[, index] - u[, index], N = 1:N_iter, shape = as.factor(i), col=as.factor(index))
   df4 = rbind(df4, df)
 }
-ggplot(df4, aes(x = N, y = eta, shape = shape, col=col)) + geom_point() + scale_shape(solid=F)+ guides(shape = F) + ggtitle("Trace plot for eta")
+ggplot(df4, aes(x = N, y = v, shape = shape, col=col)) + geom_point() + scale_shape(solid=F)+ guides(shape = F) + ggtitle("Trace plot for v")
 ```
-From the trace plots in figure \ref{fig:3eta} of the three components of $\boldsymbol \eta$ we observe only a small burn-in period.
+From the trace plots in figure \ref{fig:3v} of the three components of $\mathbf{v}$ we observe only a small burn-in period.
 
 ```{r, echo = T, eval = F}
-df7 = data.frame(eta = eta[,random_indexes])
-acf(eta[,random_indexes[1]], lag.max = 200)
-acf(eta[,random_indexes[2]], lag.max = 200)
-acf(eta[,random_indexes[3]], lag.max = 200)
+acf(eta[,random_indexes[1]]-u[,random_indexes[1]], lag.max = 200)
+acf(eta[,random_indexes[2]]-u[,random_indexes[2]], lag.max = 200)
+acf(eta[,random_indexes[3]]-u[,random_indexes[3]], lag.max = 200)
 ```
 
-```{r, echo = F, eval = T, out.width = "33%", fig.align = "center", fig.cap = "\\label{fig:acfeta1}Autocorrelation plot for component 157 of $\\boldsymbol \\eta$"}
-df7 = data.frame(eta = eta[,random_indexes])
-acf(eta[,random_indexes[1]], lag.max = 200, main = paste0("ACF of eta[",random_indexes[1],"]"))
+```{r, echo = F, eval = T, out.width = "33%", fig.align = "center", fig.cap = "\\label{fig:acfv1}Autocorrelation plot for component 157 of $\\mathbf{v}$"}
+acf(eta[,random_indexes[1]]-u[,random_indexes[1]], lag.max = 200, main = paste0("ACF of v[",random_indexes[1],"]"))
 ```
-```{r, echo = F, eval = T, out.width = "33%", fig.align = "center", fig.cap = "\\label{fig:acfeta2}Autocorrelation plot for component 222 of $\\boldsymbol \\eta$"}
-acf(eta[,random_indexes[2]], lag.max = 200, main = paste0("ACF of eta[",random_indexes[2],"]"))
+```{r, echo = F, eval = T, out.width = "33%", fig.align = "center", fig.cap = "\\label{fig:acfv2}Autocorrelation plot for component 222 of $\\mathbf{v}$"}
+acf(eta[,random_indexes[2]]-u[,random_indexes[2]], lag.max = 200, main = paste0("ACF of v[",random_indexes[2],"]"))
 ```
-```{r, echo = F, eval = T, out.width = "33%", fig.align = "center", fig.cap = "\\label{fig:acfeta3}Autocorrelation plot for component 429 of $\\boldsymbol \\eta$"}
-acf(eta[,random_indexes[3]], lag.max = 200, main = paste0("ACF of eta[",random_indexes[3],"]"))
+```{r, echo = F, eval = T, out.width = "33%", fig.align = "center", fig.cap = "\\label{fig:acfv3}Autocorrelation plot for component 429 of $\\mathbf{v}$"}
+acf(eta[,random_indexes[3]]-u[,random_indexes[3]], lag.max = 200, main = paste0("ACF of v[",random_indexes[3],"]"))
 ```
 
-From figures \ref{fig:acfeta1}-\ref{fig:acfeta3} we see that the three components of $\boldsymbol \eta$ show varying degree of autocorrelation. As it takes roughly $100$ iterations to reduce the autocorrelation to non-significance we observe that the three components are more autocorrelated than the components of $\mathbf{u}$, but still less correlated than $\kappa_v$.
+From figures \ref{fig:acfv1}-\ref{fig:acfv3} we see that the three components of $\mathbf{v}$ show varying degree of autocorrelation. As it takes roughly $100$ iterations to reduce the autocorrelation to non-significance we observe that the three components are more autocorrelated than the components of $\mathbf{u}$, but still less correlated than $\kappa_v$.
 
-Finally, the Geweke Diagnostic for the three components of $\boldsymbol \eta$ shows the following.
+Finally, the Geweke Diagnostic for the three components of $\mathbf{v}$ shows the following.
 ```{r, echo = T, eval = F}
+df7 = data.frame(v = eta[,random_indexes] - u[,random_indexes])
 gw = geweke.diag(df7)
 cat("zscores:", gw$z, "\n")
 cat("pvals:", 2*(1-pnorm(abs(gw$z))))
 ```
 ```{r, echo = F, eval = T}
+df7 = data.frame(v = eta[,random_indexes] - u[,random_indexes])
 gw = geweke.diag(df7)
 cat("zscores:", gw$z, "\n")
 cat("pvals:", 2*(1-pnorm(abs(gw$z))))
+p_val1 = round(2*(1-pnorm(abs(gw$z)))[1],2)
+p_val2 = round(2*(1-pnorm(abs(gw$z)))[2],2)
+p_val3 = round(2*(1-pnorm(abs(gw$z)))[3],2)
 ```
-$p$-values of 0.66, 0.1 and 0.19 indicate that the chain converges during the first $10\%$ iterations for all three components in consideration.
+$p$-values of `r p_val1`, `r pval_2` and `r p_val3` indicate that the chain converges during the first $10\%$ iterations for all three components in consideration.
 
 We have seen that we have a relative short burn-in period. To be safe, we consider the first 1000 iterations as burn-in when doing estimation. All in all, we have seen no evidence that our MCMC algorithm did not converge, nor do we have any prior belief that our problem might contain several modes. We therefore conclude that our Markov chain did converge. Still, most of the samples are highly autocorrelated, which is a critical flaw. High autocorrelation decreases the performance of the MCMC algorithm, implying that we have to run several iterations of the algorithm to produce the equivalent of an independent sample. Despite this weakness, the chain has in fact converged, and we believe it can be used.
 
