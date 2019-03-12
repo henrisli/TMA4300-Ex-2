@@ -49,6 +49,7 @@ Oral$SMR = Oral$Y / Oral$E
 library(fields, warn.conflict=FALSE)
 library(colorspace)
 col <- diverge_hcl(8)      # blue - red
+
 # use a function provided by spam to plot the map together with the mortality rates
 germany.plot(Oral$Y/Oral$E, col=col, legend=TRUE)
 ```
@@ -186,9 +187,10 @@ set.seed(123)
 source("dmvnorm.R")
 
 sample_u = function(kappa_v, kappa_u, eta){
-  #Samples from the canonical normal
   b = kappa_v * eta
   A = kappa_v * diag.spam(n) + kappa_u * R
+  
+  #Samples from the canonical normal
   res = rmvnorm.canonical(1, b, A)
   return(t(res))
 }
@@ -200,10 +202,13 @@ sample_eta = function(kappa_v, u, z){
   b_arg_sampler = kappa_v * u + b_taylor
   A_arg_sampler = kappa_v * diag.spam(n) + diag(c_taylor)
   
+  #Samples from the canonical normal
   return(as.vector(rmvnorm.canonical(1, b_arg_sampler, A_arg_sampler)))
 }
 
 log_full_conditional_eta = function(eta, kappa_v, u, log=T){
+  # Corresponds to p(eta | ...) in the text
+  
   res = kappa_v * eta %*% u - 1/2 * t(eta) %*% (kappa_v * diag.spam(n)) %*% eta + eta%*% Oral$Y - t(exp(eta))%*%Oral$E
   if (log){
     return(res)
@@ -214,6 +219,8 @@ log_full_conditional_eta = function(eta, kappa_v, u, log=T){
 }
 
 log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
+  # Corresponds to q(eta | ...) in the text
+  
   b_taylor = Oral$Y + Oral$E * exp(z) * (z - 1)
   c_taylor = Oral$E * exp(z)
   
