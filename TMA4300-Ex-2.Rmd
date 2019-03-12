@@ -1,4 +1,4 @@
-﻿--- 
+--- 
 title: 'TMA4300 Computer Intensive Statistical Methods Exercise 2, Spring 2019'
 output:
   pdf_document:
@@ -238,7 +238,7 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
 }
 
 #Set number of iterations
-N_iter = 1500
+N_iter = 50000
 
 
 #Allocate vectors and arrays 
@@ -365,7 +365,9 @@ acf(kappav, lag.max = 50)
 ```{r, echo = F, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:acfkappav2}Autocorrelation plot of $\\kappa_v$ with max lag of 1000."}
 acf(kappav, lag.max = 1000)
 ```
-From the plot in figure \ref{fig:acfkappav1} we see that the correlation between consecutive samples of $\kappa_v$ is very high. From the plot in figure \ref{fig:afckappav2}, we observe that the lag required to get non-significant autocorrelation is several hundred. The samples of $\kappa_v$ being highly correlated is not ideal, as it will take the MCMC algorithm several iterations to generate the equivalent of an independent sample. 
+
+From the plot in figure \ref{fig:acfkappav} we see that the correlation between consecutive samples of $\kappa_v$ is very high. From We observe that the lag required to get non-significant autocorrelation is several hundred. That the samples of $\kappa_v$ are highly correlated is not ideal, as it will take the MCMC algorithm several iterations to generate the equivalent of an independent sample. 
+
 
 As a final diagnostic for $\kappa_v$ we conduct Geweke's Diagnostic.
 ```{r, echo = T, eval = F}
@@ -412,8 +414,7 @@ acf(u[,random_indexes[2]], lag.max = 200, main = paste0("ACF of u[",random_index
 acf(u[,random_indexes[3]], lag.max = 200, main = paste0("ACF of u[",random_indexes[3],"]"))
 ```
 
-From figures \ref{fig:acfu1}-\ref{fig:acfu3} we see that the three components of $\mathbf{u}$ show varying degree of autocorrelation. As it takes roughly $50$ iterations to reduce the autocorrelation of the three components to non-significance we observe that the three components are somewhat autocorrelated, although less correlated than $\kappa_v$.
-
+From figure \ref{fig:acfu} we see that the three components of $\mathbf{u}$ show varying degree of autocorrelation. It takes roughly $50$ iterations to reduce the autocorrelation of the three components to non-significance. Even so, the components are less correlated than $\kappa_v$.
 
 As a final diagnostic, we conduct Geweke's Diagnostic to the three components.
 ```{r, echo = T, eval = F}
@@ -643,23 +644,23 @@ ggplot() + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=d
 For the three components of $\mathbf{u}$ in figure \ref{fig:comp3u} we see that the improved INLA coincides with the original INLA. Also, the distribution from INLA seems to be shifted somewhat to the right compared to the histogram of the MCMC samples, indicating that INLA might overestimate the effect of the spatial parameters $\mathbf{u}$.
 
 ```{r, echo = T, eval = T, out.width = "70%", fig.align = "center", fig.cap = "\\label{fig:comp3eta}Comparison of computed densities by INLA and histogram of MCMC sample for three randomly chosen components of $\\boldsymbol \\eta$."}
-inla_eta = result$marginals.linear.predictor
-inla_eta_improved = result_improved$marginals.linear.predictor
+inla_v = result$marginals.random$region2
+inla_v_improved = result$marginals.random$region2
 
 index = random_indexes[1]
-df1 = data.frame(inla_eta[index], idx=index); colnames(df1) = c("x", "y", "idx")
-df1_imp = data.frame(inla_eta_improved[index], idx=index); colnames(df1_imp) = c("x", "y", "idx")
-df1_samp = data.frame(x = eta[,index], idx=index)
+df1 = data.frame(inla_v[index], idx=index); colnames(df1) = c("x", "y", "idx")
+df1_imp = data.frame(inla_v_improved[index], idx=index); colnames(df1_imp) = c("x", "y", "idx")
+df1_samp = data.frame(x = eta[,index] - u[, index], idx=index)
 
 index = random_indexes[2]
-df2 = data.frame(inla_eta[index], idx=index); colnames(df2) = c("x", "y", "idx")
-df2_imp = data.frame(inla_eta_improved[index], idx=index); colnames(df2_imp) = c("x", "y", "idx")
-df2_samp = data.frame(x = eta[,index], idx=index)
+df2 = data.frame(inla_v[index], idx=index); colnames(df2) = c("x", "y", "idx")
+df2_imp = data.frame(inla_v_improved[index], idx=index); colnames(df2_imp) = c("x", "y", "idx")
+df2_samp = data.frame(x = eta[,index] - u[, index], idx=index)
 
 index = random_indexes[3]
-df3 = data.frame(inla_eta[index], idx=index); colnames(df3) = c("x", "y", "idx")
-df3_imp = data.frame(inla_eta_improved[index], idx=index); colnames(df3_imp) = c("x", "y", "idx")
-df3_samp = data.frame(x = eta[,index], idx=index)
+df3 = data.frame(inla_v[index], idx=index); colnames(df3) = c("x", "y", "idx")
+df3_imp = data.frame(inla_v_improved[index], idx=index); colnames(df3_imp) = c("x", "y", "idx")
+df3_samp = data.frame(x = eta[,index] - u[, index], idx=index)
 
 df = rbind(df1, df2, df3)
 df_imp = rbind(df1_imp, df2_imp, df3_imp)
@@ -667,7 +668,7 @@ df_samp = rbind(df1_samp, df2_samp, df3_samp)
 
 ggplot() + geom_histogram(data=df_samp, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=df_imp, aes(x = x, y = y, col="INLA - improved")) + facet_wrap(~idx) + ylab("density")
 ```
-For the three components of $\boldsymbol \eta$ in figure \ref{fig:comp3eta} we see that the improved INLA coincides with the original INLA. Also, the marginal densities from INLA perfectly coincides with the histograms of the MCMC samples, indicating that INLA might overestimate the effect of the spatial parameters $\mathbf{u}$. 
+For the three components of $\mathbf{v}$ in figure \ref{fig:comp3eta} we see that the improved INLA coincides with the original INLA. Also, the marginal densities from INLA perfectly coincides with the histograms of the MCMC samples.
 
 ```{r, echo = F, eval = T}
 INLA.time = round(result$cpu.used[4],1)
@@ -738,3 +739,4 @@ ggplot() + geom_ribbon(data=df70, aes(x = id, ymin=bot025,ymax=top975), alpha=0.
 
 
 We observe that the credible interval for the random walk model does not contain the zero-hypothesis for all values of smoking but is very large. We also see that the credible interval of the random-walk smoking parameter is approximately linear. Comparing this with the DIC values for the two models we may hypothesize that the random-walk model will tend towards the linear model and that the true relationship is highly linear. In any case, the inclusion of smoking in the model yields a better model.
+
