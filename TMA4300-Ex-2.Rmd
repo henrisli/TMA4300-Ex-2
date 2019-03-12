@@ -479,7 +479,7 @@ cat("ESS of kappa_v: ", effectiveSize(kappav))
 ```
 The ESS is the estimated number of independent samples needed to obtain a parameter estimate with the same precision as the MCMC estimate based on $N$ dependent samples. In our case, $N=50000$, which means that the quality of our $\kappa_u$ samples is the equivalent of `r round(effectiveSize(kappau))` independent samples. Our $\kappa_v$ samples are the equivalent of `r round(effectiveSize(kappav))` independent samples. This means that if we want very accurate estimates of the posterior marginals of $\kappa_u$ we will have to run the MCMC chain for a very long time. The $\kappa_u$ samples are better than the $\kappa_v$ samples, which also could be seen by the fact that the $\kappa_u$ samples are much less correlated than the $\kappa_v$ samples.
 
-To improve the ESS of our MCMC algorithm we need to decrease the autocorrelation of the samples in our algorithm. One method is to implement blocking. Blocking samples some or all of the parameters together. In this case it would be natural to sample $\kappa_u$ and $\mathbf{u}$ together and $\kappa_v$ and $\boldsymbol \eta$ together. We would then accept or reject $(\kappa_u, \mathbf{u})$ / $(\kappa_v, \boldsymbol \eta)$ as if it were a single sample. To implement this we would have to use the joint density of $(\kappa_u, \mathbf{u})$ and $(\kappa_v, \boldsymbol \eta)$. Naturally, sampling from these densities increase the complexity of the algorithm. 
+To improve the ESS of our MCMC algorithm we need to decrease the autocorrelation of the samples in our algorithm. One method is to implement blocking, which is done by sampling some or all of the parameters together. In this case it would be natural to sample $\kappa_u$ and $\mathbf{u}$ together and $\kappa_v$ and $\boldsymbol \eta$ together. We would then accept or reject $(\kappa_u, \mathbf{u})$ / $(\kappa_v, \boldsymbol \eta)$ as if it were a single sample. To implement this we would have to use the joint density of $(\kappa_u, \mathbf{u})$ and $(\kappa_v, \boldsymbol \eta)$. Naturally, sampling from these densities increases the complexity of the algorithm. 
 
 It could also be considered to use a more sophisticated approximation of the posterior marginal density of $\boldsymbol \eta$. However, we observe from figure \ref{fig:accept} that the observed acceptance probabilities used for sampling $\boldsymbol \eta$, except for the burn-in period, are reasonably high. 
 
@@ -488,7 +488,7 @@ df90 = data.frame(alpha = accept_prob, N = seq(1, N_iter))
 ggplot(df90, aes(x = N, y = alpha, col="acceptance probability")) + geom_line() +geom_smooth(aes(col = "loess approximation"), method="loess", level=0) + ylab("acceptance probability, r")
 ```
 
-```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:accept}Acceptance probabilities for sampling $\\boldsymbol \\eta$."}
+```{r, echo = F, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:accept}Acceptance probabilities for sampling $\\boldsymbol \\eta$."}
 df90 = data.frame(alpha = accept_prob, N = seq(1, N_iter))
 ggplot(df90, aes(x = N, y = alpha, col="acceptance probability")) + geom_line() +geom_smooth(aes(col = "loess approximation"), method="loess", level=0) + ylab("acceptance probability, r")
 ```
