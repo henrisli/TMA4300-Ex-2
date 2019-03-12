@@ -231,7 +231,7 @@ log_full_conditional_eta_approx = function(eta, z, u, kappa_v,  log=T){
 }
 
 #Set number of iterations
-N_iter = 50000
+N_iter = 1500
 
 
 #Allocate vectors and arrays 
@@ -351,11 +351,13 @@ acf(kappav)
 acf(kappav, lag.max = 1000)
 ```
 
-```{r, echo = F, eval = T, out.width = "50%", fig.cap = "\\label{fig:acfkappav}Autocorrelation plots of $\\kappa_v$."}
-acf(kappav)
+```{r, echo = F, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:acfkappav1}Autocorrelation plot of $\\kappa_v$ with max lag of 50."}
+acf(kappav, lag.max = 50)
+```
+```{r, echo = F, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:acfkappav2}Autocorrelation plot of $\\kappa_v$ with max lag of 1000."}
 acf(kappav, lag.max = 1000)
 ```
-From the left plot in figure \ref{fig:acfkappav} we see that the correlation between consecutive samples of $\kappa_v$ is very high. From the right plot, we see that the lag between sample $i$ and $i + \text{lag}$ required to get samples that are correlated only a non-significant level is $300$. That the samples of $\kappa_v$ are highly correlated is not ideal, as it will take the MCMC algorithm several iterations to get samples
+From the plot in figure \ref{fig:acfkappav1} we see that the correlation between consecutive samples of $\kappa_v$ is very high. From the plot in figure \ref{fig:afckappav2}, we see that the lag between sample $i$ and $i + \text{lag}$ required to get samples that are correlated only a non-significant level is $300$. That the samples of $\kappa_v$ are highly correlated is not ideal, as it will take the MCMC algorithm several iterations to get samples
 
 
 As a final diagnostic for $\kappa_v$ we conduct Geweke's Diagnostic.
@@ -392,13 +394,17 @@ acf(u[,random_indexes[1]], lag.max = 200)
 acf(u[,random_indexes[2]], lag.max = 200)
 acf(u[,random_indexes[3]], lag.max = 200)
 ```
-```{r, echo = F, eval = T, out.width = "33%", fig.cap = "\\label{fig:acfu}Autocorrelation plot for $\\mathbf{u}$"}
+```{r, echo = F, eval = T, out.width = "33%", fig.align = "center", fig.cap = "\\label{fig:acfu1}Autocorrelation plot for component 157 of $\\mathbf{u}$"}
 df5 = data.frame(u = u[,random_indexes])
 acf(u[,random_indexes[1]], lag.max = 200, main = paste0("ACF of u[",random_indexes[1],"]"))
+```
+```{r, echo = F, eval = T, out.width = "33%", fig.align = "center", fig.cap = "\\label{fig:acfu2}Autocorrelation plot for component 222 of $\\mathbf{u}$"}
 acf(u[,random_indexes[2]], lag.max = 200, main = paste0("ACF of u[",random_indexes[2],"]"))
+```
+```{r, echo = F, eval = T, out.width = "33%", fig.align = "center", fig.cap = "\\label{fig:acfu3}Autocorrelation plot for component 429 of $\\mathbf{u}$"}
 acf(u[,random_indexes[3]], lag.max = 200, main = paste0("ACF of u[",random_indexes[3],"]"))
 ```
-From figure \ref{fig:acfu} we see that the three components of $\mathbf{u}$ show varying degree of autocorrelation. As it takes roughly $50$ iterations to reduce the autocorrelation of the three components to non-significance we observe that the three components are somewhat autocorrelated, although less correlated than $\kappa_v$.
+From figures \ref{fig:acfu1}-\ref{fig:acfu3} we see that the three components of $\mathbf{u}$ show varying degree of autocorrelation. As it takes roughly $50$ iterations to reduce the autocorrelation of the three components to non-significance we observe that the three components are somewhat autocorrelated, although less correlated than $\kappa_v$.
 
 As a final diagnostic, we conduct Geweke's Diagnostic to the three components.
 ```{r, echo = T, eval = F}
@@ -432,14 +438,18 @@ acf(eta[,random_indexes[2]], lag.max = 200)
 acf(eta[,random_indexes[3]], lag.max = 200)
 ```
 
-```{r, echo = F, eval = T, out.width = "33%", fig.cap = "\\label{fig:acfeta}Autocorrelation plot for $\\boldsymbol \\eta$"}
+```{r, echo = F, eval = T, out.width = "33%", fig.align = "center", fig.cap = "\\label{fig:acfeta1}Autocorrelation plot for component 157 of $\\boldsymbol \\eta$"}
 df7 = data.frame(eta = eta[,random_indexes])
 acf(eta[,random_indexes[1]], lag.max = 200, main = paste0("ACF of eta[",random_indexes[1],"]"))
+```
+```{r, echo = F, eval = T, out.width = "33%", fig.align = "center", fig.cap = "\\label{fig:acfeta2}Autocorrelation plot for component 222 of $\\boldsymbol \\eta$"}
 acf(eta[,random_indexes[2]], lag.max = 200, main = paste0("ACF of eta[",random_indexes[2],"]"))
+```
+```{r, echo = F, eval = T, out.width = "33%", fig.align = "center", fig.cap = "\\label{fig:acfeta3}Autocorrelation plot for component 429 of $\\boldsymbol \\eta$"}
 acf(eta[,random_indexes[3]], lag.max = 200, main = paste0("ACF of eta[",random_indexes[3],"]"))
 ```
 
-From figure \ref{fig:acfeta} we see that the three components of $\boldsymbol \eta$ show varying degree of autocorrelation. As it takes roughly $100$ iterations to reduce the autocorrelation to non-significance we observe that the three components are more autocorrelated than the components of $\mathbf{u}$.
+From figures \ref{fig:acfeta1}-\ref{fig:acfeta3} we see that the three components of $\boldsymbol \eta$ show varying degree of autocorrelation. As it takes roughly $100$ iterations to reduce the autocorrelation to non-significance we observe that the three components are more autocorrelated than the components of $\mathbf{u}$, but still less correlated than $\kappa_v$.
 
 Finally, the Geweke Diagnostic for the three components of $\boldsymbol \eta$ shows the following.
 ```{r, echo = T, eval = F}
@@ -567,20 +577,18 @@ result$cpu.used
 ```
 Having obtained the posterior marginals from INLA, we compare these estimates to the one obtained by MCMC, and plot the difference of $\exp(\mathbf{u})$ on the Germany map.
 
-```{r, echo = T, eval = F, out.width = "50%", fig.align = "center"}
-germany.plot(exp(result$summary.random$region$`0.5quant`) - post_median_u, col=col, legend=TRUE)
-```
-```{r, echo = F, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:medianexpucomp} The difference between the MCMC estimate of the posterior median of $\\exp(\\mathbf{u})$ and the INLA estimate of $\\exp(\\mathbf{u})$ for all regions in Germany."}
+
+```{r, echo = T, eval = T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:medianexpucomp} The difference between the MCMC estimate of the posterior median of $\\exp(\\mathbf{u})$ and the INLA estimate of $\\exp(\\mathbf{u})$ for all regions in Germany."}
 germany.plot(exp(result$summary.random$region$`0.5quant`) - post_median_u, col=col, legend=TRUE)
 ```
 From figure \ref{fig:medianexpucomp}, we see that we have reasonably small differences between the computed $\exp(\mathbf{u})$ from MCMC and INLA, with some larger outliers. However, we observe no negative differences, indicating that INLA might overestimate the effect of the spatial field $\mathbf{u}$.  
-
+<!---
 ```{r, echo=T, eval=T}
 cat("INLA: ", exp(result$summary.random$region$`0.5quant`[random_indexes]), "\n")
 cat("MCMC: ", post_median_u[random_indexes])
 ```
 We confirm that the MCMC and INLA estimates of selected components of $u$ are close.  
-
+--->
 Now, we want to compare histograms of the MCMC-samples and the posterior marginals obtained by INLA for both precision parameters $\kappa_u$ and $\kappa_v$, and the same for the three randomly chosen components of $\mathbf{u}$ and $\boldsymbol \eta$. We also note that improved estimates of the posterior marginals for the precision parameters can be obtained by applying `inla.hyperpar(result)` on the original INLA results object.
 
 ```{r, echo=T, eval=T, out.width = "50%", fig.align = "center", fig.cap = "\\label{fig:compkappau}Comparison of computed marginal densities by INLA and histogram of MCMC sample for $\\kappa_u$."}
@@ -657,7 +665,10 @@ ggplot() + geom_histogram(data=df_samp, aes(x = x, y = ..density.., col="MCMC"),
 ```
 For the three components of $\boldsymbol \eta$ in figure \ref{fig:comp3eta} we see that the improved INLA coincides with the original INLA. Also, the marginal densities from INLA perfectly coincides with the histograms of the MCMC samples, indicating that INLA might overestimate the effect of the spatial parameters $\mathbf{u}$. 
 
-We note that INLA and MCMC in general produce results that are at least qualitatively comparable. For $\kappa_u$, $\kappa_v$ and $\eta$, the resulting marginal densities perfectly overlap. For the spatial effect $\mathbf{u}$ we observe some difference. Also worth noting is that the MCMC sampler uses `r round(sum(times)/60)` minutes, while INLA uses `r cat(round(as.vector(result$cpu.used)[4]),1)` seconds to run. Because they yield very similar results, we see that INLA is vastly superior time consumption is a significant restriction. 
+```{r, echo = F, eval = T}
+INLA.time = round(result$cpu.used[4],1)
+```
+We note that INLA and MCMC in general produce results that are at least qualitatively comparable. For $\kappa_u$, $\kappa_v$ and $\eta$, the resulting marginal densities perfectly overlap. For the spatial effect $\mathbf{u}$ we observe some difference. Also worth noting is that the MCMC sampler uses `r round(sum(times)/60)` minutes, while INLA uses `r INLA.time` seconds to run. Because they yield very similar results, we see that INLA is vastly superior time consumption is a significant restriction. 
 
 
 ## b)
@@ -701,7 +712,7 @@ cat("model with smoking as RW2:", result_3$dic$dic)
 We see from the printout that the two models with smoking included have lower DIC than the original model without smoking. Also, the linear and random walk model have almost the same DIC (difference of only 0.002). The DIC is a generalization of the Akaike Information Criterion, which maximizes likelihood while adding a penalty for the number of parameters. The best model is the model with lowest DIC. The models with smoking included have lower DIC values, so we conclude that these models are better than the original. 
 
 Finally, we plot the posterior median within $95\%$ credible intervals of the non-linear covariate effect. 
-```{r, echo = T, eval = T, out.width = "70%", fig.align = "center", fig.cap = "\\label{fig:confintsmoking}95$\\%$Credible interval for posterior median of the non-linear covariate effect."}
+```{r, echo = T, eval = T, out.width = "70%", fig.align = "center", fig.cap = "\\label{fig:confintsmoking}95$\\%$ Credible interval for posterior median of the non-linear covariate effect."}
 df70 = data.frame(id = seq(1, length(result_3$summary.random$smoking$mean)),
                   mean =  result_3$summary.random$smoking$mean,
                   median =  result_3$summary.random$smoking$`0.5quant`,
@@ -715,7 +726,7 @@ ggplot() + geom_ribbon(data=df70, aes(x = id, ymin=bot025,ymax=top975), alpha=0.
   ylab("f(smoking)") + xlab("smoking")
 ```
 
-We observed that the inclusion of smoking in the model produces a reduction in loglikelihood that outweighs the parameter penalty. However, we see that the reduction is very small. Equivalently we see that the credible interval of the random-walk smoking parameter does not contain the zero-hypothesis but is very large. Both of these results indicate that the inclusion of smoking in the model yields only a slightly better model. From this we can argue either of the following 
+We observed that the inclusion of smoking in the model produces a reduction in loglikelihood that outweighs the parameter penalty. However, we see that the reduction is very small. Equivalently we see that the credible interval of the random-walk smoking parameter does not contain the zero-hypothesis for all values of `smoking`, but the interval is very large. Both of these results indicate that the inclusion of smoking in the model yields only a slightly better model. From this we can argue either of the following 
 1. Smoking is only slightly correlated with mortality rates of oral cavity cancer in males in Germany during 1986–1990.
 2. Smoking is correlated with the spatial effect $\mathbf{u}$, which is already included in the model. 
 
