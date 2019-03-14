@@ -241,7 +241,6 @@ u = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
 eta = matrix(data= NA, nrow = N_iter, ncol = length(Oral$Y))
 kappau = vector(mode = "double", length = N_iter)
 kappav = vector(mode = "double", length = N_iter)
-updated_eta = vector(length = N_iter)
 accept_prob = vector(length = N_iter)
 times = vector(mode = "double", length = N_iter)
 
@@ -287,7 +286,6 @@ for (i in 2:N_iter) {
   # Accept if r<alpha, with r coming from a uniform[0,1] distribution
   r = runif(1)
   if (log(r) < log_alpha){
-    updated_eta[i] = TRUE
     eta[i,] = eta_prop
   }
   else{
@@ -487,7 +485,7 @@ cat("ESS of kappa_v: ", effectiveSize(kappav))
 ```
 The ESS is the estimated number of independent samples needed to obtain a parameter estimate with the same precision as the MCMC estimate based on $N$ dependent samples. In our case, $N=50000$, which means that the quality of our $\kappa_u$ samples is the equivalent of `r round(effectiveSize(kappau))` independent samples. Our $\kappa_v$ samples are the equivalent of `r round(effectiveSize(kappav))` independent samples. This means that if we want very accurate estimates of the posterior marginals of $\kappa_u$ we will have to run the MCMC chain for a very long time. The $\kappa_u$ samples are better than the $\kappa_v$ samples, which also could be seen by the fact that the $\kappa_u$ samples are much less correlated than the $\kappa_v$ samples.
 
-To improve the ESS of our MCMC algorithm we need to decrease the autocorrelation of the samples in our algorithm. One method is to implement blocking, which is done by sampling some or all of the parameters together. In this case it would be natural to sample $\kappa_u$ and $\mathbf{u}$ together and $\kappa_v$ and $\boldsymbol \eta$ together. We would then accept or reject $(\kappa_u, \mathbf{u})$ / $(\kappa_v, \boldsymbol \eta)$ as if it were a single sample. To implement this we would have to use the joint density of $(\kappa_u, \mathbf{u})$ and $(\kappa_v, \boldsymbol \eta)$. Naturally, sampling from these densities increases the complexity of the algorithm. 
+To improve the ESS of our MCMC algorithm we need to decrease the autocorrelation of the samples in our algorithm. One method is to implement blocking, which is done by sampling some or all of the parameters together. In this case it would be natural to sample $\kappa_u$, $\mathbf{u}$, $\kappa_v$ and $\boldsymbol \eta$ all together, because $\mathbf{u}$ is dependent on both $\kappa_u$ and $\kappa_v$ and $\boldsymbol \eta$ is dependent on $\kappa_v$. We would then accept or reject $(\kappa_u, \mathbf{u}, \kappa_v, \boldsymbol \eta)$ as if it were a single sample. To implement this we would have to use the joint density of all the parameters. Naturally, sampling from these densities increases the complexity of the algorithm. Also, we could experience very low acceptance probabilities when accepting/rejecting all the parameters together, which would decrease the preformance of the algorithm.
 
 It could also be considered to use a more sophisticated approximation of the posterior marginal density of $\boldsymbol \eta$. However, we observe from figure \ref{fig:accept} that the observed acceptance probabilities used for sampling $\boldsymbol \eta$, except for the burn-in period, are reasonably high. 
 
