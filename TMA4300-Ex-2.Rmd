@@ -196,7 +196,7 @@ sample_eta = function(kappa_v, u, z){
   c_taylor = Oral$E * exp(z)
   
   b_arg_sampler = kappa_v * u + b_taylor
-  A_arg_sampler = kappa_v * diag.spam(n) + diag(c_taylor)
+  A_arg_sampler = diag.spam(c_taylor + kappa_v)
   
   #Samples from the canonical normal
   return(as.vector(rmvnorm.canonical(1, b_arg_sampler, A_arg_sampler)))
