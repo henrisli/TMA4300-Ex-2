@@ -556,7 +556,7 @@ kappauprior = list(prior="loggamma", param=c(alpha_u, beta_u))
 kappavprior = list(prior="loggamma", param=c(alpha_v, beta_v))
 
 # eta = u(region) + v(region)
-formula <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=T) + 
+formula <- Y~ - 1 + f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=FALSE) + 
             f(region2, model="iid", hyper=list(prec=kappavprior))
 
 # Oral$Y = Oral$E * eta
@@ -630,7 +630,7 @@ df_samp = rbind(df1_samp, df2_samp, df3_samp)
 
 ggplot() + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=df_imp, aes(x = x, y = y, col="INLA - improved")) + geom_histogram(data=df_samp, aes(x = x, y = ..density.., col="MCMC"), bins=100) + facet_wrap(~idx) + ylab("density") + xlim(-1, 1)
 ```
-For the three components of $\mathbf{u}$ in figure \ref{fig:comp3u} we see that the improved INLA marginals coincide with the original INLA marginals. The INLA marginals seem to be somewhat positively shifted compared to the histogram of the MCMC samples, indicating that INLA may overestimate the effect of the spatial effect $\mathbf{u}$.
+For the three components of $\mathbf{u}$ in figure \ref{fig:comp3u} we see that the improved INLA marginals coincide with the original INLA marginals. The INLA marginals coincide with the histogram of the MCMC samples. 
 
 ```{r, echo = T, eval = T, out.width = "70%", fig.align = "center", fig.cap = "\\label{fig:comp3v}Comparison of computed densities by INLA and histogram of MCMC sample for three randomly chosen components of $\\mathbf{v}$."}
 inla_v = result$marginals.random$region2
@@ -684,12 +684,14 @@ df_samp = rbind(df1_samp, df2_samp, df3_samp)
 
 ggplot() + geom_histogram(data=df_samp, aes(x = x, y = ..density.., col="MCMC"), bins=100) + geom_line(data=df, aes(x = x, y = y, col="INLA")) +  geom_line(data=df_imp, aes(x = x, y = y, col="INLA - improved")) + facet_wrap(~idx) + ylab("density")
 ```
-We note that even though INLA gives positively shifted estimates for $\mathbf{u}$, the INLA marginals of the three components of $\boldsymbol \eta = \mathbf{u} + \mathbf{v}$ perfectly overlap with the MCMC histograms, see figure \ref{fig:comp3eta}.
+
+We note that the INLA marginals of the three components of $\boldsymbol \eta = \mathbf{u} + \mathbf{v}$ perfectly overlap with the MCMC histograms, see figure \ref{fig:comp3eta}.
 
 ```{r, echo = F, eval = T}
 INLA.time = round(result$cpu.used[4],1)
 ```
-In general, INLA and MCMC produce results that are at least qualitatively comparable. For $\kappa_u$, $\kappa_v$ and $\boldsymbol \eta$, the resulting marginal densities perfectly overlap. For the spatial effect $\mathbf{u}$ we observe some positive shift in the INLA estimate.  Worth noting is that the MCMC sampler uses `r round(sum(times)/60)` minutes, while INLA uses `r INLA.time` seconds to run. Because they yield very similar results, we see that INLA is vastly superior if time consumption is a significant restriction. 
+
+In general, INLA and MCMC produce results that are at least qualitatively comparable and the resulting marginal densities perfectly overlap with the histograms of the MCMC samples.  Worth noting is that the MCMC sampler uses `r round(sum(times)/60)` minutes, while INLA uses `r INLA.time` seconds to run. Because they yield very similar results, we see that INLA is vastly superior if time consumption is a significant restriction. 
 
 ## b)
 We now want to extend the INLA model formulation to incorporate a smoking covariate. First, we load information about smoking in each region.
@@ -701,7 +703,7 @@ Oral$smoking = as.vector(smoking)$V1
 Then, we make two new models. The first has smoking as a linear effect, and the second has smoking as a non-linear function using random walk of second order. 
 ```{r, echo = T, eval = T}
 # Add smoking as a linear covariate
-formula_2 <- Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=T) + 
+formula_2 <- Y~ - 1 + f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=T) + 
             f(region2, model="iid", hyper=list(prec=kappavprior)) + 
             f(smoking, model="linear")
 
@@ -709,7 +711,7 @@ result_2 = inla(formula_2, family="poisson", E = Oral$E, data=Oral,
                 control.compute = list(dic=TRUE))
 
 # Add smoking as a random walk of order 2
-formula_3 <-  Y~f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=T) + 
+formula_3 <-  Y~ - 1 + f(region,model="besag", graph = g, hyper=list(prec=kappauprior), constr=T) + 
             f(region2, model="iid", hyper=list(prec=kappavprior)) + 
             f(smoking, model="rw2")
 
