@@ -691,7 +691,7 @@ We note that the INLA marginals of the three components of $\boldsymbol \eta = \
 INLA.time = round(result$cpu.used[4],1)
 ```
 
-In general, INLA and MCMC produce results that are at least qualitatively comparable and the resulting marginal densities perfectly overlap with the histograms of the MCMC samples.  Worth noting is that the MCMC sampler uses `r round(sum(times)/60)` minutes, while INLA uses `r INLA.time` seconds to run. Because they yield very similar results, we see that INLA is vastly superior if time consumption is a significant restriction. 
+In general, INLA and MCMC produce results that are at least qualitatively comparable and the resulting marginal densities seem to overlap with the histograms of the MCMC samples. Noting that the MCMC sampler uses `r round(sum(times)/60)` minutes, while INLA uses `r INLA.time` seconds to run. Because they yield very similar results, we see that INLA is vastly superior if time consumption is a significant restriction. 
 
 ## b)
 We now want to extend the INLA model formulation to incorporate a smoking covariate. First, we load information about smoking in each region.
